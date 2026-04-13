@@ -1,9 +1,9 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { recordTEvent } from "@/app/store/global";
+import { getApi, getConnStatusAtom, recordTEvent, WOS } from "@/app/store/global";
 import { TermViewModel } from "@/app/view/term/term-model";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { t } from "@/util/i18n";
 import * as util from "@/util/util";
 import { cn } from "@/util/util";
 import {
@@ -19,20 +19,19 @@ import {
 } from "@floating-ui/react";
 import * as jotai from "jotai";
 import { useEffect, useRef, useState } from "react";
-import { BlockEnv } from "./blockenv";
 
 function isTermViewModel(viewModel: ViewModel): viewModel is TermViewModel {
     return viewModel?.viewType === "term";
 }
 
+function handleLearnMore() {
+    getApi().openExternal("https://docs.waveterm.dev/durable-sessions");
+}
+
 function LearnMoreButton() {
-    const waveEnv = useWaveEnv<BlockEnv>();
     return (
-        <button
-            className="text-muted text-xs hover:underline cursor-pointer text-left"
-            onClick={() => waveEnv.electron.openExternal("https://docs.waveterm.dev/durable-sessions")}
-        >
-            Learn More
+        <button className="text-muted text-xs hover:underline cursor-pointer text-left" onClick={handleLearnMore}>
+            {t("durableSession.learnMore", undefined, "Learn More")}
         </button>
     );
 }
@@ -53,18 +52,21 @@ function StandardSessionContent({ viewModel, onClose }: StandardSessionContentPr
         <div className="flex flex-col gap-2 max-w-[280px]">
             <div className="font-semibold text-sm flex items-center gap-2 text-secondary">
                 <i className="fa-sharp fa-regular fa-shield text-muted" />
-                Standard SSH Session
+                {t("durableSession.standard.title", undefined, "Standard SSH Session")}
             </div>
             <div className="text-xs text-secondary leading-relaxed">
-                Standard SSH sessions end when the connection drops. Durable sessions keep your shell state, running
-                programs, and history alive through network changes, computer sleep, and Wave restarts.
+                {t(
+                    "durableSession.standard.body",
+                    undefined,
+                    "Standard SSH sessions end when the connection drops. Durable sessions keep your shell state, running programs, and history alive through network changes, computer sleep, and Wave restarts."
+                )}
             </div>
             <button
                 className="bg-zinc-700 text-foreground rounded px-3 py-1.5 text-xs font-medium hover:bg-zinc-600 transition-colors cursor-pointer flex items-center justify-center gap-2 mt-1"
                 onClick={handleRestartAsDurable}
             >
                 <i className="fa-solid fa-shield text-sky-500" />
-                Restart as Durable
+                {t("durableSession.standard.restartAsDurable", undefined, "Restart as Durable")}
             </button>
             <LearnMoreButton />
         </div>
@@ -80,11 +82,14 @@ function DurableAttachedContent({ onClose }: DurableAttachedContentProps) {
         <div className="flex flex-col gap-2 max-w-[280px]">
             <div className="font-semibold text-sm flex items-center gap-2 text-secondary">
                 <i className="fa-sharp fa-solid fa-shield text-sky-500" />
-                Durable Session (Attached)
+                {t("durableSession.attached.title", undefined, "Durable Session (Attached)")}
             </div>
             <div className="text-xs text-secondary leading-relaxed">
-                Your shell state, running programs, and history are protected. This session will survive network
-                disconnects.
+                {t(
+                    "durableSession.attached.body",
+                    undefined,
+                    "Your shell state, running programs, and history are protected. This session will survive network disconnects."
+                )}
             </div>
             <LearnMoreButton />
         </div>
@@ -100,11 +105,14 @@ function DurableDetachedContent({ onClose }: DurableDetachedContentProps) {
         <div className="flex flex-col gap-2 max-w-[280px]">
             <div className="font-semibold text-sm flex items-center gap-2 text-secondary">
                 <i className="fa-sharp fa-solid fa-shield text-sky-300" />
-                Durable Session (Detached)
+                {t("durableSession.detached.title", undefined, "Durable Session (Detached)")}
             </div>
             <div className="text-xs text-secondary leading-relaxed">
-                Connection lost, but your session is still running on the remote server. Wave will automatically
-                reconnect when the connection is restored.
+                {t(
+                    "durableSession.detached.body",
+                    undefined,
+                    "Connection lost, but your session is still running on the remote server. Wave will automatically reconnect when the connection is restored."
+                )}
             </div>
             <LearnMoreButton />
         </div>
@@ -128,10 +136,14 @@ function DurableAwaitingStart({ connected, viewModel, onClose }: DurableAwaiting
             <div className="flex flex-col gap-2 max-w-[280px]">
                 <div className="font-semibold text-sm flex items-center gap-2 text-secondary whitespace-nowrap">
                     <i className="fa-sharp fa-solid fa-shield text-muted" />
-                    Durable Session (Awaiting Connection)
+                    {t("durableSession.awaitingConnection.title", undefined, "Durable Session (Awaiting Connection)")}
                 </div>
                 <div className="text-xs text-secondary leading-relaxed">
-                    Configured for a durable session. The session will start when the connection is established.
+                    {t(
+                        "durableSession.awaitingConnection.body",
+                        undefined,
+                        "Configured for a durable session. The session will start when the connection is established."
+                    )}
                 </div>
                 <LearnMoreButton />
             </div>
@@ -142,17 +154,21 @@ function DurableAwaitingStart({ connected, viewModel, onClose }: DurableAwaiting
         <div className="flex flex-col gap-2 max-w-[280px]">
             <div className="font-semibold text-sm flex items-center gap-2 text-secondary whitespace-nowrap">
                 <i className="fa-sharp fa-solid fa-shield text-muted" />
-                Durable Session (Awaiting Start)
+                {t("durableSession.awaitingStart.title", undefined, "Durable Session (Awaiting Start)")}
             </div>
             <div className="text-xs text-secondary leading-relaxed">
-                Configured for a durable session, but session hasn't started yet. Click below to start it manually.
+                {t(
+                    "durableSession.awaitingStart.body",
+                    undefined,
+                    "Configured for a durable session, but session hasn't started yet. Click below to start it manually."
+                )}
             </div>
             <button
                 className="bg-zinc-700 text-foreground rounded px-3 py-1.5 text-xs font-medium hover:bg-zinc-600 transition-colors cursor-pointer flex items-center justify-center gap-2 mt-1"
                 onClick={handleStartSession}
             >
                 <i className="fa-solid fa-shield text-sky-500" />
-                Start Session
+                {t("durableSession.awaitingStart.startSession", undefined, "Start Session")}
             </button>
             <LearnMoreButton />
         </div>
@@ -168,9 +184,11 @@ function DurableStartingContent({ onClose }: DurableStartingContentProps) {
         <div className="flex flex-col gap-2 max-w-[280px]">
             <div className="font-semibold text-sm flex items-center gap-2 text-secondary">
                 <i className="fa-sharp fa-solid fa-shield text-sky-300" />
-                Durable Session (Starting)
+                {t("durableSession.starting.title", undefined, "Durable Session (Starting)")}
             </div>
-            <div className="text-xs text-secondary leading-relaxed">The durable session is starting.</div>
+            <div className="text-xs text-secondary leading-relaxed">
+                {t("durableSession.starting.body", undefined, "The durable session is starting.")}
+            </div>
             <LearnMoreButton />
         </div>
     );
@@ -194,21 +212,31 @@ function DurableEndedContent({ doneReason, startupError, viewModel, onClose }: D
         util.fireAndForget(() => viewModel.restartSessionWithDurability(false));
     };
 
-    let titleText = "Durable Session (Ended)";
-    let descriptionText = "The durable session has ended. This block is still configured for durable sessions.";
-    const showRestartButton = true;
+    let titleText = t("durableSession.ended.title", undefined, "Durable Session (Ended)");
+    let descriptionText = t(
+        "durableSession.ended.body",
+        undefined,
+        "The durable session has ended. This block is still configured for durable sessions."
+    );
+    let showRestartButton = true;
 
     if (doneReason === "terminated") {
-        titleText = "Durable Session (Ended, Exited)";
-        descriptionText =
-            "The shell was terminated and is no longer running. This block is still configured for durable sessions.";
+        titleText = t("durableSession.exited.title", undefined, "Durable Session (Ended, Exited)");
+        descriptionText = t(
+            "durableSession.exited.body",
+            undefined,
+            "The shell was terminated and is no longer running. This block is still configured for durable sessions."
+        );
     } else if (doneReason === "gone") {
-        titleText = "Durable Session (Ended, Lost)";
-        descriptionText =
-            "The session was lost or not found on the remote server. This may have occurred due to a system reboot or the session being manually terminated.";
+        titleText = t("durableSession.lost.title", undefined, "Durable Session (Ended, Lost)");
+        descriptionText = t(
+            "durableSession.lost.body",
+            undefined,
+            "The session was lost or not found on the remote server. This may have occurred due to a system reboot or the session being manually terminated."
+        );
     } else if (doneReason === "startuperror") {
-        titleText = "Durable Session (Failed to Start)";
-        descriptionText = "The durable session failed to start.";
+        titleText = t("durableSession.failed.title", undefined, "Durable Session (Failed to Start)");
+        descriptionText = t("durableSession.failed.body", undefined, "The durable session failed to start.");
         return (
             <div className="flex flex-col gap-2 max-w-[280px]">
                 <div className="font-semibold text-sm flex items-center gap-2 text-secondary">
@@ -226,14 +254,14 @@ function DurableEndedContent({ doneReason, startupError, viewModel, onClose }: D
                     onClick={handleRestartSession}
                 >
                     <i className="fa-solid fa-shield text-sky-500" />
-                    Restart Session
+                    {t("durableSession.restartSession", undefined, "Restart Session")}
                 </button>
                 <button
                     className="bg-zinc-700 text-foreground rounded px-3 py-1.5 text-xs font-medium hover:bg-zinc-600 transition-colors cursor-pointer flex items-center justify-center gap-2"
                     onClick={handleRestartAsStandard}
                 >
                     <i className="fa-sharp fa-regular fa-shield text-muted" />
-                    Restart as Standard
+                    {t("durableSession.restartAsStandard", undefined, "Restart as Standard")}
                 </button>
                 <LearnMoreButton />
             </div>
@@ -253,7 +281,7 @@ function DurableEndedContent({ doneReason, startupError, viewModel, onClose }: D
                     onClick={handleRestartSession}
                 >
                     <i className="fa-solid fa-shield text-sky-500" />
-                    Restart Session
+                    {t("durableSession.restartSession", undefined, "Restart Session")}
                 </button>
             )}
             <LearnMoreButton />
@@ -335,11 +363,11 @@ export function DurableSessionFlyover({
     placement = "bottom",
     divClassName,
 }: DurableSessionFlyoverProps) {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const connName = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(blockId, "connection"));
+    const [blockData] = WOS.useWaveObjectValue<Block>(WOS.makeORef("block", blockId));
     const termDurableStatus = util.useAtomValueSafe(viewModel?.termDurableStatus);
     const termConfigedDurable = util.useAtomValueSafe(viewModel?.termConfigedDurable);
-    const connStatus = jotai.useAtomValue(waveEnv.getConnStatusAtom(connName));
+    const connName = blockData?.meta?.connection;
+    const connStatus = jotai.useAtomValue(getConnStatusAtom(connName));
 
     const { color: durableIconColor, iconType: durableIconType } = getIconProps(
         termDurableStatus,

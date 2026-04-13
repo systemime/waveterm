@@ -1,9 +1,9 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { t } from "@/util/i18n";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { FakeBlock } from "./onboarding-layout";
-import { FakeTermBlock } from "./onboarding-layout-term";
 import waveLogo from "/logos/wave-logo.png";
 
 export type CommandRevealProps = {
@@ -88,7 +88,7 @@ export const FakeCommand = ({ command, typeIntervalMs = 100, onComplete, childre
 };
 
 export const ViewShortcutsCommand = ({ isMac, onComplete }: { isMac: boolean; onComplete?: () => void }) => {
-    const modKey = isMac ? "⌘ Cmd" : "Alt";
+    const modKey = isMac ? `⌘ ${t("quickTips.cmdKey", undefined, "Cmd")}` : t("quickTips.altKey", undefined, "Alt");
     const markdown = `### Keyboard Shortcuts
 
 **Switch Tabs**

@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { globalStore } from "@/app/store/jotaiStore";
-import { waveEventSubscribeSingle } from "@/app/store/wps";
+import { waveEventSubscribe } from "@/app/store/wps";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { atoms, getApi, WOS } from "@/store/global";
+import { t } from "@/util/i18n";
 import { base64ToString, stringToBase64 } from "@/util/util";
 import { atom, type Atom, type PrimitiveAtom } from "jotai";
 import type * as MonacoTypes from "monaco-editor";
@@ -79,11 +80,11 @@ export class BuilderAppPanelModel {
             this.statusUnsubFn();
         }
 
-        this.statusUnsubFn = waveEventSubscribeSingle({
+        this.statusUnsubFn = waveEventSubscribe({
             eventType: "builderstatus",
             scope: WOS.makeORef("builder", builderId),
             handler: (event) => {
-                const status = event.data;
+                const status: BuilderStatusData = event.data;
                 const currentStatus = globalStore.get(this.builderStatusAtom);
                 if (!currentStatus || !currentStatus.version || status.version > currentStatus.version) {
                     globalStore.set(this.builderStatusAtom, status);
@@ -105,7 +106,7 @@ export class BuilderAppPanelModel {
         await this.loadAppFile(appId);
         await this.loadEnvVars(builderId);
 
-        this.appGoUpdateUnsubFn = waveEventSubscribeSingle({
+        this.appGoUpdateUnsubFn = waveEventSubscribe({
             eventType: "waveapp:appgoupdated",
             scope: appId,
             handler: () => {
@@ -169,7 +170,15 @@ export class BuilderAppPanelModel {
             this.debouncedRestart();
         } catch (err) {
             console.error("Failed to save environment variables:", err);
-            globalStore.set(this.errorAtom, `Failed to save environment variables: ${err.message || "Unknown error"}`);
+            const errMsg = err instanceof Error ? err.message : String(err);
+            globalStore.set(
+                this.errorAtom,
+                t(
+                    "builder.errors.saveEnvVarsFailed",
+                    { error: errMsg || t("builder.errors.unknownError", undefined, "Unknown error") },
+                    "Failed to save environment variables: {{error}}"
+                )
+            );
         }
     }
 
@@ -214,7 +223,15 @@ export class BuilderAppPanelModel {
             });
         } catch (err) {
             console.error("Failed to start builder:", err);
-            globalStore.set(this.errorAtom, `Failed to start builder: ${err.message || "Unknown error"}`);
+            const errMsg = err instanceof Error ? err.message : String(err);
+            globalStore.set(
+                this.errorAtom,
+                t(
+                    "builder.errors.startBuilderFailed",
+                    { error: errMsg || t("builder.errors.unknownError", undefined, "Unknown error") },
+                    "Failed to start builder: {{error}}"
+                )
+            );
         }
     }
 
@@ -237,7 +254,15 @@ export class BuilderAppPanelModel {
             getApi().doRefresh();
         } catch (err) {
             console.error("Failed to switch builder app:", err);
-            globalStore.set(this.errorAtom, `Failed to switch builder app: ${err.message || "Unknown error"}`);
+            const errMsg = err instanceof Error ? err.message : String(err);
+            globalStore.set(
+                this.errorAtom,
+                t(
+                    "builder.errors.switchBuilderAppFailed",
+                    { error: errMsg || t("builder.errors.unknownError", undefined, "Unknown error") },
+                    "Failed to switch builder app: {{error}}"
+                )
+            );
         }
     }
 
@@ -268,7 +293,15 @@ export class BuilderAppPanelModel {
             }
         } catch (err) {
             console.error("Failed to load app.go:", err);
-            globalStore.set(this.errorAtom, `Failed to load app.go: ${err.message || "Unknown error"}`);
+            const errMsg = err instanceof Error ? err.message : String(err);
+            globalStore.set(
+                this.errorAtom,
+                t(
+                    "builder.errors.loadAppGoFailed",
+                    { error: errMsg || t("builder.errors.unknownError", undefined, "Unknown error") },
+                    "Failed to load app.go: {{error}}"
+                )
+            );
         } finally {
             globalStore.set(this.isLoadingAtom, false);
         }
@@ -289,7 +322,15 @@ export class BuilderAppPanelModel {
             this.debouncedRestart();
         } catch (err) {
             console.error("Failed to save app.go:", err);
-            globalStore.set(this.errorAtom, `Failed to save app.go: ${err.message || "Unknown error"}`);
+            const errMsg = err instanceof Error ? err.message : String(err);
+            globalStore.set(
+                this.errorAtom,
+                t(
+                    "builder.errors.saveAppGoFailed",
+                    { error: errMsg || t("builder.errors.unknownError", undefined, "Unknown error") },
+                    "Failed to save app.go: {{error}}"
+                )
+            );
         }
     }
 

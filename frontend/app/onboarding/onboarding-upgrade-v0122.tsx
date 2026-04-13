@@ -1,13 +1,14 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { t } from "@/util/i18n";
+
 const UpgradeOnboardingModal_v0_12_2_Content = () => {
     return (
         <div className="flex flex-col items-start gap-6 w-full mb-4 unselectable">
             <div className="text-secondary leading-relaxed">
                 <p className="mb-0">
-                    Wave AI can now create and modify files with visual diff previews and easy rollback capabilities.
-                    Plus performance improvements and bug fixes.
+                    {t("onboarding.upgrade.v0122.lead")}
                 </p>
             </div>
 
@@ -16,19 +17,22 @@ const UpgradeOnboardingModal_v0_12_2_Content = () => {
                     <i className="text-[24px] text-accent fa-solid fa-file-pen"></i>
                 </div>
                 <div className="flex flex-col items-start gap-2 flex-1">
-                    <div className="text-foreground text-base font-semibold leading-[18px]">Wave AI File Editing</div>
+                    <div className="text-foreground text-base font-semibold leading-[18px]">
+                        {t("onboarding.upgrade.v0122.fileEditing.title")}
+                    </div>
                     <div className="text-secondary leading-5">
                         <ul className="list-disc list-outside space-y-1 pl-5">
                             <li>
-                                <strong>File Write Tool</strong> - Wave AI can now create and modify files with your
-                                approval
+                                <strong>{t("onboarding.upgrade.v0122.fileEditing.item1Title")}</strong> -{" "}
+                                {t("onboarding.upgrade.v0122.fileEditing.item1Body")}
                             </li>
                             <li>
-                                <strong>Visual Diff Preview</strong> - See exactly what will change before approving
-                                edits
+                                <strong>{t("onboarding.upgrade.v0122.fileEditing.item2Title")}</strong> -{" "}
+                                {t("onboarding.upgrade.v0122.fileEditing.item2Body")}
                             </li>
                             <li>
-                                <strong>Easy Rollback</strong> - Revert file changes with a simple "Revert File" button
+                                <strong>{t("onboarding.upgrade.v0122.fileEditing.item3Title")}</strong> -{" "}
+                                {t("onboarding.upgrade.v0122.fileEditing.item3Body")}
                             </li>
                         </ul>
                     </div>
@@ -41,16 +45,17 @@ const UpgradeOnboardingModal_v0_12_2_Content = () => {
                 </div>
                 <div className="flex flex-col items-start gap-2 flex-1">
                     <div className="text-foreground text-base font-semibold leading-[18px]">
-                        Additional AI Improvements
+                        {t("onboarding.upgrade.v0122.ai.title")}
                     </div>
                     <div className="text-secondary leading-5">
                         <ul className="list-disc list-outside space-y-1 pl-5">
-                            <li>Drag & drop files from preview viewer directly to Wave AI</li>
+                            <li>{t("onboarding.upgrade.v0122.ai.item1")}</li>
                             <li>
-                                Directory listings support in <span className="font-mono">`wsh ai`</span> commands
+                                {t("onboarding.upgrade.v0122.ai.item2Prefix")}{" "}
+                                <span className="font-mono">`wsh ai`</span> {t("onboarding.upgrade.v0122.ai.item2Suffix")}
                             </li>
-                            <li>Adjustable thinking level and max output tokens per chat</li>
-                            <li>Improved tool descriptions and input validations</li>
+                            <li>{t("onboarding.upgrade.v0122.ai.item3")}</li>
+                            <li>{t("onboarding.upgrade.v0122.ai.item4")}</li>
                         </ul>
                     </div>
                 </div>
@@ -62,13 +67,13 @@ const UpgradeOnboardingModal_v0_12_2_Content = () => {
                 </div>
                 <div className="flex flex-col items-start gap-2 flex-1">
                     <div className="text-foreground text-base font-semibold leading-[18px]">
-                        Bug Fixes & Improvements
+                        {t("onboarding.upgrade.v0122.bugfix.title")}
                     </div>
                     <div className="text-secondary leading-5">
                         <ul className="list-disc list-outside space-y-1 pl-5">
-                            <li>Fixed significant memory leak in the RPC system</li>
-                            <li>Config file schema validation restored</li>
-                            <li>Fixed PowerShell 5.x regression</li>
+                            <li>{t("onboarding.upgrade.v0122.bugfix.item1")}</li>
+                            <li>{t("onboarding.upgrade.v0122.bugfix.item2")}</li>
+                            <li>{t("onboarding.upgrade.v0122.bugfix.item3")}</li>
                         </ul>
                     </div>
                 </div>

@@ -1,12 +1,12 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ModalsRenderer } from "@/app/modals/modalsrenderer";
-import { globalStore } from "@/app/store/jotaiStore";
 import { AppSelectionModal } from "@/builder/app-selection-modal";
 import { BuilderWorkspace } from "@/builder/builder-workspace";
-import { atoms, isDev } from "@/store/global";
+import { ModalsRenderer } from "@/app/modals/modalsrenderer";
+import { atoms, globalStore, isDev } from "@/store/global";
 import { appHandleKeyDown } from "@/store/keymodel";
+import { t } from "@/util/i18n";
 import * as keyutil from "@/util/keyutil";
 import { isBlank } from "@/util/util";
 import { Provider, useAtomValue } from "jotai";
@@ -43,12 +43,14 @@ function BuilderAppInner() {
                 style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
             >
                 {isDev() ? (
-                    <div className="text-accent text-xl" title="Running Wave Dev Build">
+                    <div className="text-accent text-xl" title={t("builder.runningDevBuild", undefined, "Running Wave Dev Build")}>
                         <i className="fa fa-brands fa-dev fa-fw" />
                     </div>
                 ) : null}
                 <div className="text-sm font-medium">
-                    WaveApp Builder{!isBlank(builderAppId) && ` (${builderAppId})`}
+                    {!isBlank(builderAppId)
+                        ? t("app.builderTitleWithAppId", { appId: builderAppId }, "WaveApp Builder ({{appId}})")
+                        : t("app.builderTitle", undefined, "WaveApp Builder")}
                 </div>
             </div>
             <DndProvider backend={HTML5Backend}>

@@ -10,7 +10,8 @@ import {
     transformBlocks,
 } from "@/app/element/markdown-util";
 import remarkMermaidToTag from "@/app/element/remark-mermaid-to-tag";
-import { boundNumber, useAtomValueSafe, cn } from "@/util/util";
+import { t } from "@/util/i18n";
+import { boundNumber, cn, useAtomValueSafe } from "@/util/util";
 import clsx from "clsx";
 import { Atom } from "jotai";
 import { OverlayScrollbarsComponent, OverlayScrollbarsComponentRef } from "overlayscrollbars-react";
@@ -54,7 +55,7 @@ const Link = ({
         }
     };
     return (
-        <a href={props.href} onClick={onClick} className="text-accent hover:underline">
+        <a href={props.href} onClick={onClick}>
             {props.children}
         </a>
     );
@@ -166,7 +167,7 @@ const CodeBlock = ({ children, onClickExecute }: CodeBlockProps) => {
         <pre className="codeblock">
             {children}
             <div className="codeblock-actions">
-                <CopyButton onClick={handleCopy} title="Copy" />
+                <CopyButton onClick={handleCopy} title={t("common.copy", undefined, "Copy")} />
                 {onClickExecute && (
                     <IconButton
                         decl={{
@@ -391,7 +392,7 @@ const Markdown = ({
                     return (
                         <a
                             key={item.href}
-                            className="toc-item text-accent hover:underline"
+                            className="toc-item"
                             style={{ "--indent-factor": item.depth } as React.CSSProperties}
                             onClick={() => setFocusedHeading(item.href)}
                         >
@@ -498,7 +499,7 @@ const Markdown = ({
             {toc && (
                 <OverlayScrollbarsComponent className="toc mt-1" options={{ scrollbars: { autoHide: "leave" } }}>
                     <div className="toc-inner">
-                        <h4 className="font-bold">Table of Contents</h4>
+                        <h4 className="font-bold">{t("preview.tableOfContents", undefined, "Table of Contents")}</h4>
                         {toc}
                     </div>
                 </OverlayScrollbarsComponent>

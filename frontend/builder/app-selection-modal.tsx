@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { FlexiModal } from "@/app/modals/modal";
-import { globalStore } from "@/app/store/jotaiStore";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { atoms, getApi } from "@/store/global";
+import { atoms, getApi, globalStore } from "@/store/global";
+import { t } from "@/util/i18n";
 import * as WOS from "@/store/wos";
 import { formatRelativeTime } from "@/util/util";
 import { useEffect, useState } from "react";
@@ -24,11 +24,23 @@ function CreateNewWaveApp({ onCreateApp }: { onCreateApp: (appName: string) => P
             return false;
         }
         if (name.length > MaxAppNameLength) {
-            setInputError(`Name must be ${MaxAppNameLength} characters or less`);
+            setInputError(
+                t(
+                    "builder.appSelection.nameMaxLengthError",
+                    { max: MaxAppNameLength },
+                    "Name must be {{max}} characters or less"
+                )
+            );
             return false;
         }
         if (!AppNameRegex.test(name)) {
-            setInputError("Only letters, numbers, hyphens, and underscores allowed");
+            setInputError(
+                t(
+                    "builder.appSelection.nameInvalidCharsError",
+                    undefined,
+                    "Only letters, numbers, hyphens, and underscores allowed"
+                )
+            );
             return false;
         }
         setInputError("");
@@ -51,7 +63,9 @@ function CreateNewWaveApp({ onCreateApp }: { onCreateApp: (appName: string) => P
 
     return (
         <div className="min-h-[80px]">
-            <h3 className="text-base font-medium mb-1 text-muted-foreground">Create New WaveApp</h3>
+            <h3 className="text-base font-medium mb-1 text-muted-foreground">
+                {t("builder.appSelection.createNewWaveApp", undefined, "Create New WaveApp")}
+            </h3>
             <div className="relative">
                 <div className="flex w-full">
                     <input
@@ -67,7 +81,7 @@ function CreateNewWaveApp({ onCreateApp }: { onCreateApp: (appName: string) => P
                                 handleCreate();
                             }
                         }}
-                        placeholder="my-app"
+                        placeholder={t("builder.appSelection.appNamePlaceholder", undefined, "my-app")}
                         maxLength={MaxAppNameLength}
                         className={`flex-1 px-3 py-2 bg-panel border rounded-l focus:outline-none transition-colors ${
                             inputError ? "border-error" : "border-border focus:border-accent"
@@ -84,7 +98,7 @@ function CreateNewWaveApp({ onCreateApp }: { onCreateApp: (appName: string) => P
                                 : "bg-accent text-black hover:bg-accent-hover cursor-pointer"
                         }`}
                     >
-                        Create
+                        {t("builder.appSelection.create", undefined, "Create")}
                     </button>
                 </div>
                 {inputError && (
@@ -114,7 +128,7 @@ export function AppSelectionModal() {
             setApps(sortedApps);
         } catch (err) {
             console.error("Failed to load apps:", err);
-            setError("Failed to load apps");
+            setError(t("builder.appSelection.loadAppsFailed", undefined, "Failed to load apps"));
         } finally {
             setLoading(false);
         }
@@ -130,7 +144,14 @@ export function AppSelectionModal() {
                 appIdToUse = result.draftappid;
             } catch (err) {
                 console.error("Failed to create draft from local app:", err);
-                setError(`Failed to create draft from ${appId}: ${err.message || String(err)}`);
+                const errMsg = err instanceof Error ? err.message : String(err);
+                setError(
+                    t(
+                        "builder.appSelection.createDraftFromLocalFailed",
+                        { appId, error: errMsg },
+                        "Failed to create draft from {{appId}}: {{error}}"
+                    )
+                );
                 return;
             }
         }
@@ -142,7 +163,7 @@ export function AppSelectionModal() {
             data: { "builder:appid": appIdToUse },
         });
         globalStore.set(atoms.builderAppId, appIdToUse);
-        document.title = `WaveApp Builder (${appIdToUse})`;
+        document.title = t("app.builderTitleWithAppId", { appId: appIdToUse }, "WaveApp Builder ({{appId}})");
         getApi().setBuilderWindowAppId(appIdToUse);
     };
 
@@ -155,7 +176,7 @@ export function AppSelectionModal() {
             data: { "builder:appid": draftAppId },
         });
         globalStore.set(atoms.builderAppId, draftAppId);
-        document.title = `WaveApp Builder (${draftAppId})`;
+        document.title = t("app.builderTitleWithAppId", { appId: draftAppId }, "WaveApp Builder ({{appId}})");
         getApi().setBuilderWindowAppId(draftAppId);
     };
 
@@ -167,7 +188,9 @@ export function AppSelectionModal() {
         const parts = appId.split("/");
         if (parts.length === 2) {
             const isDraft = parts[0] === "draft";
-            return isDraft ? `${parts[1]} (draft)` : parts[1];
+            return isDraft
+                ? t("builder.appSelection.draftAppName", { name: parts[1] }, "{{name}} (draft)")
+                : parts[1];
         }
         return appId;
     };
@@ -175,7 +198,7 @@ export function AppSelectionModal() {
     if (loading) {
         return (
             <FlexiModal className="min-w-[600px] w-[600px]">
-                <div className="text-center py-8">Loading apps...</div>
+                <div className="text-center py-8">{t("builder.appSelection.loadingApps", undefined, "Loading apps...")}</div>
             </FlexiModal>
         );
     }
@@ -183,7 +206,9 @@ export function AppSelectionModal() {
     return (
         <FlexiModal className="min-w-[600px] w-[600px] max-h-[90vh] overflow-y-auto">
             <div className="w-full px-2 pt-0 pb-4">
-                <h2 className="text-2xl mb-2">Select a WaveApp to Edit</h2>
+                <h2 className="text-2xl mb-2">
+                    {t("builder.appSelection.selectWaveAppToEdit", undefined, "Select a WaveApp to Edit")}
+                </h2>
 
                 {error && (
                     <div className="mb-6 px-4 py-3 bg-panel rounded">
@@ -196,7 +221,9 @@ export function AppSelectionModal() {
 
                 {apps.length > 0 && (
                     <div className="mb-2">
-                        <h3 className="text-base font-medium mb-1 text-muted-foreground">Existing WaveApps</h3>
+                        <h3 className="text-base font-medium mb-1 text-muted-foreground">
+                            {t("builder.appSelection.existingWaveApps", undefined, "Existing WaveApps")}
+                        </h3>
                         <div className="space-y-2 max-h-[220px] overflow-y-auto">
                             {apps.map((appInfo) => (
                                 <button
@@ -209,7 +236,11 @@ export function AppSelectionModal() {
                                         <div className="flex flex-col">
                                             <span>{getAppDisplayName(appInfo.appid)}</span>
                                             <span className="text-[11px] text-muted mt-0.5">
-                                                Last updated: {formatRelativeTime(appInfo.modtime)}
+                                                {t(
+                                                    "builder.appSelection.lastUpdated",
+                                                    { time: formatRelativeTime(appInfo.modtime) },
+                                                    "Last updated: {{time}}"
+                                                )}
                                             </span>
                                         </div>
                                     </div>
@@ -222,7 +253,7 @@ export function AppSelectionModal() {
                 {apps.length > 0 && (
                     <div className="flex items-center gap-4 my-2">
                         <div className="flex-1 border-t border-border"></div>
-                        <span className="text-muted-foreground text-sm">or</span>
+                        <span className="text-muted-foreground text-sm">{t("builder.appSelection.or", undefined, "or")}</span>
                         <div className="flex-1 border-t border-border"></div>
                     </div>
                 )}

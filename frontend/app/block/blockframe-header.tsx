@@ -10,47 +10,42 @@ import {
 } from "@/app/block/blockutil";
 import { ConnectionButton } from "@/app/block/connectionbutton";
 import { DurableSessionFlyover } from "@/app/block/durable-session-flyover";
-import { getBlockBadgeAtom } from "@/app/store/badge";
-import {
-    createBlockSplitHorizontally,
-    createBlockSplitVertically,
-    recordTEvent,
-    refocusNode,
-    WOS,
-} from "@/app/store/global";
+import { ContextMenuModel } from "@/app/store/contextmenu";
+import { recordTEvent, WOS } from "@/app/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
 import { uxCloseBlock } from "@/app/store/keymodel";
+import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
 import { IconButton } from "@/element/iconbutton";
 import { NodeModel } from "@/layout/index";
+import { t } from "@/util/i18n";
 import * as util from "@/util/util";
-import { cn, makeIconClass } from "@/util/util";
+import { cn } from "@/util/util";
 import * as jotai from "jotai";
 import * as React from "react";
-import { BlockEnv } from "./blockenv";
 import { BlockFrameProps } from "./blocktypes";
 
 function handleHeaderContextMenu(
     e: React.MouseEvent<HTMLDivElement>,
     blockId: string,
     viewModel: ViewModel,
-    nodeModel: NodeModel,
-    blockEnv: BlockEnv
+    nodeModel: NodeModel
 ) {
     e.preventDefault();
     e.stopPropagation();
     const magnified = globalStore.get(nodeModel.isMagnified);
-    const menu: ContextMenuItem[] = [
+    let menu: ContextMenuItem[] = [
         {
-            label: magnified ? "Un-Magnify Block" : "Magnify Block",
+            label: magnified
+                ? t("block.unMagnify", undefined, "Un-Magnify Block")
+                : t("block.magnify", undefined, "Magnify Block"),
             click: () => {
                 nodeModel.toggleMagnify();
             },
         },
         { type: "separator" },
         {
-            label: "Copy BlockId",
+            label: t("block.copyBlockId", undefined, "Copy BlockId"),
             click: () => {
                 navigator.clipboard.writeText(blockId);
             },
@@ -61,26 +56,23 @@ function handleHeaderContextMenu(
     menu.push(
         { type: "separator" },
         {
-            label: "Close Block",
+            label: t("block.closeBlock", undefined, "Close Block"),
             click: () => uxCloseBlock(blockId),
         }
     );
-    blockEnv.showContextMenu(menu, e);
+    ContextMenuModel.showContextMenu(menu, e);
 }
 
 type HeaderTextElemsProps = {
     viewModel: ViewModel;
-    blockId: string;
+    blockData: Block;
     preview: boolean;
     error?: Error;
 };
 
-const HeaderTextElems = React.memo(({ viewModel, blockId, preview, error }: HeaderTextElemsProps) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const frameTextAtom = waveEnv.getBlockMetaKeyAtom(blockId, "frame:text");
-    const frameText = jotai.useAtomValue(frameTextAtom);
+const HeaderTextElems = React.memo(({ viewModel, blockData, preview, error }: HeaderTextElemsProps) => {
     let headerTextUnion = util.useAtomValueSafe(viewModel?.viewText);
-    headerTextUnion = frameText ?? headerTextUnion;
+    headerTextUnion = blockData?.meta?.["frame:text"] ?? headerTextUnion;
 
     const headerTextElems: React.ReactElement[] = [];
     if (typeof headerTextUnion === "string") {
@@ -102,7 +94,11 @@ const HeaderTextElems = React.memo(({ viewModel, blockId, preview, error }: Head
             <div className="iconbutton disabled" key="controller-status" onClick={copyHeaderErr}>
                 <i
                     className="fa-sharp fa-solid fa-triangle-exclamation"
-                    title={"Error Rendering View Header: " + error.message}
+                    title={t(
+                        "block.errorRenderingViewHeader",
+                        { error: error.message },
+                        "Error Rendering View Header: {{error}}"
+                    )}
                 />
             </div>
         );
@@ -119,63 +115,29 @@ type HeaderEndIconsProps = {
 };
 
 const HeaderEndIcons = React.memo(({ viewModel, nodeModel, blockId }: HeaderEndIconsProps) => {
-    const blockEnv = useWaveEnv<BlockEnv>();
     const endIconButtons = util.useAtomValueSafe(viewModel?.endIconButtons);
     const magnified = jotai.useAtomValue(nodeModel.isMagnified);
     const ephemeral = jotai.useAtomValue(nodeModel.isEphemeral);
     const numLeafs = jotai.useAtomValue(nodeModel.numLeafs);
     const magnifyDisabled = numLeafs <= 1;
-    const showSplitButtons = jotai.useAtomValue(blockEnv.getSettingsKeyAtom("term:showsplitbuttons"));
 
     const endIconsElem: React.ReactElement[] = [];
 
     if (endIconButtons && endIconButtons.length > 0) {
         endIconsElem.push(...endIconButtons.map((button, idx) => <IconButton key={idx} decl={button} />));
     }
-    if (showSplitButtons && viewModel?.viewType === "term") {
-        const splitHorizontalDecl: IconButtonDecl = {
-            elemtype: "iconbutton",
-            icon: "columns",
-            title: "Split Horizontally",
-            click: (e) => {
-                e.stopPropagation();
-                const blockAtom = WOS.getWaveObjectAtom<Block>(WOS.makeORef("block", blockId));
-                const blockData = globalStore.get(blockAtom);
-                const blockDef: BlockDef = {
-                    meta: blockData?.meta || { view: "term", controller: "shell" },
-                };
-                createBlockSplitHorizontally(blockDef, blockId, "after");
-            },
-        };
-        const splitVerticalDecl: IconButtonDecl = {
-            elemtype: "iconbutton",
-            icon: "grip-lines",
-            title: "Split Vertically",
-            click: (e) => {
-                e.stopPropagation();
-                const blockAtom = WOS.getWaveObjectAtom<Block>(WOS.makeORef("block", blockId));
-                const blockData = globalStore.get(blockAtom);
-                const blockDef: BlockDef = {
-                    meta: blockData?.meta || { view: "term", controller: "shell" },
-                };
-                createBlockSplitVertically(blockDef, blockId, "after");
-            },
-        };
-        endIconsElem.push(<IconButton key="split-horizontal" decl={splitHorizontalDecl} />);
-        endIconsElem.push(<IconButton key="split-vertical" decl={splitVerticalDecl} />);
-    }
     const settingsDecl: IconButtonDecl = {
         elemtype: "iconbutton",
         icon: "cog",
-        title: "Settings",
-        click: (e) => handleHeaderContextMenu(e, blockId, viewModel, nodeModel, blockEnv),
+        title: t("block.settings", undefined, "Settings"),
+        click: (e) => handleHeaderContextMenu(e, blockId, viewModel, nodeModel),
     };
     endIconsElem.push(<IconButton key="settings" decl={settingsDecl} className="block-frame-settings" />);
     if (ephemeral) {
         const addToLayoutDecl: IconButtonDecl = {
             elemtype: "iconbutton",
             icon: "circle-plus",
-            title: "Add to Layout",
+            title: t("block.addToLayout", undefined, "Add to Layout"),
             click: () => {
                 nodeModel.addEphemeralNodeToLayout();
             },
@@ -186,10 +148,7 @@ const HeaderEndIcons = React.memo(({ viewModel, nodeModel, blockId }: HeaderEndI
             <OptMagnifyButton
                 key="unmagnify"
                 magnified={magnified}
-                toggleMagnify={() => {
-                    nodeModel.toggleMagnify();
-                    setTimeout(() => refocusNode(blockId), 50);
-                }}
+                toggleMagnify={nodeModel.toggleMagnify}
                 disabled={magnifyDisabled}
             />
         );
@@ -198,7 +157,7 @@ const HeaderEndIcons = React.memo(({ viewModel, nodeModel, blockId }: HeaderEndI
     const closeDecl: IconButtonDecl = {
         elemtype: "iconbutton",
         icon: "xmark-large",
-        title: "Close",
+        title: t("common.close", undefined, "Close"),
         click: () => uxCloseBlock(nodeModel.blockId),
     };
     endIconsElem.push(<IconButton key="close" decl={closeDecl} className="block-frame-default-close" />);
@@ -215,43 +174,37 @@ const BlockFrame_Header = ({
     changeConnModalAtom,
     error,
 }: BlockFrameProps & { changeConnModalAtom: jotai.PrimitiveAtom<boolean>; error?: Error }) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const metaView = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "view"));
-    const metaFrameTitle = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "frame:title"));
-    const metaFrameIcon = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "frame:icon"));
-    const metaConnection = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "connection"));
-    let viewName = util.useAtomValueSafe(viewModel?.viewName) ?? blockViewToName(metaView);
-    let viewIconUnion = util.useAtomValueSafe(viewModel?.viewIcon) ?? blockViewToIcon(metaView);
+    const [blockData] = WOS.useWaveObjectValue<Block>(WOS.makeORef("block", nodeModel.blockId));
+    let viewName = util.useAtomValueSafe(viewModel?.viewName) ?? blockViewToName(blockData?.meta?.view);
+    let viewIconUnion = util.useAtomValueSafe(viewModel?.viewIcon) ?? blockViewToIcon(blockData?.meta?.view);
     const preIconButton = util.useAtomValueSafe(viewModel?.preIconButton);
     const useTermHeader = util.useAtomValueSafe(viewModel?.useTermHeader);
     const termConfigedDurable = util.useAtomValueSafe(viewModel?.termConfigedDurable);
     const hideViewName = util.useAtomValueSafe(viewModel?.hideViewName);
-    const badge = jotai.useAtomValue(getBlockBadgeAtom(useTermHeader ? nodeModel.blockId : null));
     const magnified = jotai.useAtomValue(nodeModel.isMagnified);
     const prevMagifiedState = React.useRef(magnified);
     const manageConnection = util.useAtomValueSafe(viewModel?.manageConnection);
-    const iconColor = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "icon:color"));
     const dragHandleRef = preview ? null : nodeModel.dragHandleRef;
-    const isTerminalBlock = metaView === "term";
-    viewName = metaFrameTitle ?? viewName;
-    viewIconUnion = metaFrameIcon ?? viewIconUnion;
+    const isTerminalBlock = blockData?.meta?.view === "term";
+    viewName = blockData?.meta?.["frame:title"] ?? viewName;
+    viewIconUnion = blockData?.meta?.["frame:icon"] ?? viewIconUnion;
 
     React.useEffect(() => {
         if (magnified && !preview && !prevMagifiedState.current) {
-            waveEnv.rpc.ActivityCommand(TabRpcClient, { nummagnify: 1 });
+            RpcApi.ActivityCommand(TabRpcClient, { nummagnify: 1 });
             recordTEvent("action:magnify", { "block:view": viewName });
         }
         prevMagifiedState.current = magnified;
     }, [magnified]);
 
-    const viewIconElem = getViewIconElem(viewIconUnion, iconColor);
+    const viewIconElem = getViewIconElem(viewIconUnion, blockData);
 
     return (
         <div
             className={cn("block-frame-default-header", useTermHeader && "!pl-[2px]")}
             data-role="block-header"
             ref={dragHandleRef}
-            onContextMenu={(e) => handleHeaderContextMenu(e, nodeModel.blockId, viewModel, nodeModel, waveEnv)}
+            onContextMenu={(e) => handleHeaderContextMenu(e, nodeModel.blockId, viewModel, nodeModel)}
         >
             {!useTermHeader && (
                 <>
@@ -266,7 +219,7 @@ const BlockFrame_Header = ({
                 <ConnectionButton
                     ref={connBtnRef}
                     key="connbutton"
-                    connection={metaConnection}
+                    connection={blockData?.meta?.connection}
                     changeConnModalAtom={changeConnModalAtom}
                     isTerminalBlock={isTerminalBlock}
                 />
@@ -280,12 +233,7 @@ const BlockFrame_Header = ({
                     divClassName="iconbutton disabled text-[13px] ml-[-4px]"
                 />
             )}
-            {useTermHeader && badge && (
-                <div className="pointer-events-none flex items-center px-1" style={{ color: badge.color || "#fbbf24" }}>
-                    <i className={makeIconClass(badge.icon, true, { defaultIcon: "circle-small" })} />
-                </div>
-            )}
-            <HeaderTextElems viewModel={viewModel} blockId={nodeModel.blockId} preview={preview} error={error} />
+            <HeaderTextElems viewModel={viewModel} blockData={blockData} preview={preview} error={error} />
             <HeaderEndIcons viewModel={viewModel} nodeModel={nodeModel} blockId={nodeModel.blockId} />
         </div>
     );

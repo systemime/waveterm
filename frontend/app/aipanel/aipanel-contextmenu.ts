@@ -4,9 +4,9 @@
 import { waveAIHasSelection } from "@/app/aipanel/waveai-focus-utils";
 import { ContextMenuModel } from "@/app/store/contextmenu";
 import { isDev } from "@/app/store/global";
-import { globalStore } from "@/app/store/jotaiStore";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
+import { t } from "@/util/i18n";
 import { WaveAIModel } from "./waveai-model";
 
 export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boolean): Promise<void> {
@@ -27,7 +27,7 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
     }
 
     menu.push({
-        label: "New Chat",
+        label: t("aiPanel.newChat"),
         click: () => {
             model.clearChat();
         },
@@ -47,7 +47,7 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
     if (model.inBuilder) {
         maxTokensSubmenu.push(
             {
-                label: "24k",
+                label: t("aiPanel.outputTokens.24k", undefined, "24k"),
                 type: "checkbox",
                 checked: currentMaxTokens === 24576,
                 click: () => {
@@ -58,7 +58,7 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
                 },
             },
             {
-                label: "64k (Pro)",
+                label: t("aiPanel.outputTokens.64kPro", undefined, "64k (Pro)"),
                 type: "checkbox",
                 checked: currentMaxTokens === 65536,
                 click: () => {
@@ -72,7 +72,7 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
     } else {
         if (isDev()) {
             maxTokensSubmenu.push({
-                label: "1k (Dev Testing)",
+                label: t("aiPanel.outputTokens.1kDevTesting", undefined, "1k (Dev Testing)"),
                 type: "checkbox",
                 checked: currentMaxTokens === 1024,
                 click: () => {
@@ -85,7 +85,7 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
         }
         maxTokensSubmenu.push(
             {
-                label: "4k",
+                label: t("aiPanel.outputTokens.4k", undefined, "4k"),
                 type: "checkbox",
                 checked: currentMaxTokens === 4096,
                 click: () => {
@@ -96,7 +96,7 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
                 },
             },
             {
-                label: "16k (Pro)",
+                label: t("aiPanel.outputTokens.16kPro", undefined, "16k (Pro)"),
                 type: "checkbox",
                 checked: currentMaxTokens === 16384,
                 click: () => {
@@ -107,7 +107,7 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
                 },
             },
             {
-                label: "64k (Pro)",
+                label: t("aiPanel.outputTokens.64kPro", undefined, "64k (Pro)"),
                 type: "checkbox",
                 checked: currentMaxTokens === 65536,
                 click: () => {
@@ -121,14 +121,14 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
     }
 
     menu.push({
-        label: "Max Output Tokens",
+        label: t("aiPanel.maxOutputTokens"),
         submenu: maxTokensSubmenu,
     });
 
     menu.push({ type: "separator" });
 
     menu.push({
-        label: "Configure Modes",
+        label: t("aiPanel.configureModes"),
         click: () => {
             RpcApi.RecordTEventCommand(
                 TabRpcClient,
@@ -148,12 +148,12 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
         menu.push({ type: "separator" });
 
         menu.push({
-            label: "Hide Wave AI",
+            label: t("aiPanel.hideWaveAI"),
             click: () => {
                 model.closeWaveAIPanel();
             },
         });
     }
 
-    ContextMenuModel.getInstance().showContextMenu(menu, e);
+    ContextMenuModel.showContextMenu(menu, e);
 }

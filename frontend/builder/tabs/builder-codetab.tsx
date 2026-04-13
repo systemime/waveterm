@@ -4,6 +4,7 @@
 import { CodeEditor } from "@/app/view/codeeditor/codeeditor";
 import { BuilderAppPanelModel } from "@/builder/store/builder-apppanel-model";
 import { atoms } from "@/store/global";
+import { t } from "@/util/i18n";
 import * as keyutil from "@/util/keyutil";
 import { cn } from "@/util/util";
 import { useAtomValue } from "jotai";
@@ -55,7 +56,7 @@ const BuilderCodeTab = memo(() => {
     if (!builderAppId) {
         return (
             <div className="w-full h-full flex items-center justify-center">
-                <div className="text-secondary">No builder app selected</div>
+                <div className="text-secondary">{t("builder.code.noAppSelected", undefined, "No builder app selected")}</div>
             </div>
         );
     }
@@ -63,7 +64,7 @@ const BuilderCodeTab = memo(() => {
     if (isLoading) {
         return (
             <div className="w-full h-full flex items-center justify-center">
-                <div className="text-secondary">Loading app.go...</div>
+                <div className="text-secondary">{t("builder.code.loadingAppGo", undefined, "Loading app.go...")}</div>
             </div>
         );
     }
@@ -87,7 +88,7 @@ const BuilderCodeTab = memo(() => {
                 )}
                 onClick={saveNeeded ? handleSave : undefined}
             >
-                Save
+                {t("builder.code.save", undefined, "Save")}
             </button>
             <CodeEditor
                 blockId={builderAppId}

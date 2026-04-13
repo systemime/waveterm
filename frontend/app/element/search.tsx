@@ -1,6 +1,7 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { t } from "@/util/i18n";
 import { autoUpdate, FloatingPortal, Middleware, offset, useFloating } from "@floating-ui/react";
 import clsx from "clsx";
 import { atom, useAtom, WritableAtom } from "jotai";
@@ -26,7 +27,6 @@ const SearchComponent = ({
     caseSensitive: caseSensitiveAtom,
     wholeWord: wholeWordAtom,
     isOpen: isOpenAtom,
-    focusInput: focusInputAtom,
     anchorRef,
     offsetX = 10,
     offsetY = 10,
@@ -38,8 +38,6 @@ const SearchComponent = ({
     const [search, setSearch] = useAtom<string>(searchAtom);
     const [index, setIndex] = useAtom<number>(indexAtom);
     const [numResults, setNumResults] = useAtom<number>(numResultsAtom);
-    const [focusInputCounter, setFocusInputCounter] = useAtom<number>(focusInputAtom);
-    const inputRef = useRef<HTMLInputElement>(null);
 
     const handleOpenChange = useCallback((open: boolean) => {
         setIsOpen(open);
@@ -50,7 +48,6 @@ const SearchComponent = ({
             setSearch("");
             setIndex(0);
             setNumResults(0);
-            setFocusInputCounter(0);
         }
     }, [isOpen]);
 
@@ -59,15 +56,6 @@ const SearchComponent = ({
         setNumResults(0);
         onSearch?.(search);
     }, [search]);
-
-    // When activateSearch fires while already open, it increments focusInputCounter
-    // to signal this specific instance to grab focus (avoids global DOM queries).
-    useEffect(() => {
-        if (focusInputCounter > 0 && isOpen) {
-            inputRef.current?.focus();
-            inputRef.current?.select();
-        }
-    }, [focusInputCounter]);
 
     const middleware: Middleware[] = [];
     const offsetCallback = useCallback(
@@ -129,7 +117,7 @@ const SearchComponent = ({
     const prevDecl: IconButtonDecl = {
         elemtype: "iconbutton",
         icon: "chevron-up",
-        title: "Previous Result (Shift+Enter)",
+        title: t("search.previousResult", undefined, "Previous Result (Shift+Enter)"),
         disabled: numResults === 0,
         click: onPrevWrapper,
     };
@@ -137,7 +125,7 @@ const SearchComponent = ({
     const nextDecl: IconButtonDecl = {
         elemtype: "iconbutton",
         icon: "chevron-down",
-        title: "Next Result (Enter)",
+        title: t("search.nextResult", undefined, "Next Result (Enter)"),
         disabled: numResults === 0,
         click: onNextWrapper,
     };
@@ -145,13 +133,25 @@ const SearchComponent = ({
     const closeDecl: IconButtonDecl = {
         elemtype: "iconbutton",
         icon: "xmark-large",
-        title: "Close (Esc)",
+        title: t("modal.closeEsc", undefined, "Close (ESC)"),
         click: () => setIsOpen(false),
     };
 
-    const regexDecl = createToggleButtonDecl(regexAtom, "custom@regex", "Regular Expression");
-    const wholeWordDecl = createToggleButtonDecl(wholeWordAtom, "custom@whole-word", "Whole Word");
-    const caseSensitiveDecl = createToggleButtonDecl(caseSensitiveAtom, "custom@case-sensitive", "Case Sensitive");
+    const regexDecl = createToggleButtonDecl(
+        regexAtom,
+        "custom@regex",
+        t("search.regularExpression", undefined, "Regular Expression")
+    );
+    const wholeWordDecl = createToggleButtonDecl(
+        wholeWordAtom,
+        "custom@whole-word",
+        t("search.wholeWord", undefined, "Whole Word")
+    );
+    const caseSensitiveDecl = createToggleButtonDecl(
+        caseSensitiveAtom,
+        "custom@case-sensitive",
+        t("search.caseSensitive", undefined, "Case Sensitive")
+    );
 
     return (
         <>
@@ -159,8 +159,7 @@ const SearchComponent = ({
                 <FloatingPortal>
                     <div className="search-container" style={{ ...floatingStyles }} ref={refs.setFloating}>
                         <Input
-                            ref={inputRef}
-                            placeholder="Search"
+                            placeholder={t("common.search", undefined, "Search")}
                             value={search}
                             onChange={setSearch}
                             onKeyDown={onKeyDown}
@@ -169,7 +168,7 @@ const SearchComponent = ({
                         <div
                             className={clsx("search-results", { hidden: numResults === 0 })}
                             aria-live="polite"
-                            aria-label="Search Results"
+                            aria-label={t("search.resultsAriaLabel", undefined, "Search Results")}
                         >
                             {index + 1}/{numResults}
                         </div>
@@ -211,7 +210,6 @@ export function useSearch(options?: SearchOptions): SearchProps {
             resultsIndex: atom(0),
             resultsCount: atom(0),
             isOpen: atom(false),
-            focusInput: atom(0),
             regex: options?.regex !== undefined ? atom(options.regex) : undefined,
             caseSensitive: options?.caseSensitive !== undefined ? atom(options.caseSensitive) : undefined,
             wholeWord: options?.wholeWord !== undefined ? atom(options.wholeWord) : undefined,

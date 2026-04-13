@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { WaveStreamdown } from "@/app/element/streamdown";
+import { t } from "@/util/i18n";
 import { memo, useEffect, useRef, useState } from "react";
 
 interface ChatConfig {
@@ -85,7 +86,9 @@ const AIThinking = memo(() => (
             <i className="fa fa-circle text-[10px] mx-1"></i>
             <i className="fa fa-circle text-[10px]"></i>
         </div>
-        <span className="text-sm text-gray-400">AI is thinking...</span>
+        <span className="text-sm text-gray-400">
+            {t("onboarding.fakeChat.thinking", undefined, "AI is thinking...")}
+        </span>
     </div>
 ));
 
@@ -209,21 +212,23 @@ const FakeAIPanelHeader = memo(() => {
 
             <div className="flex items-center flex-shrink-0 whitespace-nowrap">
                 <div className="flex items-center text-sm whitespace-nowrap">
-                    <span className="text-gray-300 mr-1 text-[12px]">Context</span>
+                    <span className="text-gray-300 mr-1 text-[12px]">
+                        {t("onboarding.fakeChat.context", undefined, "Context")}
+                    </span>
                     <button
                         className="relative inline-flex h-6 w-14 items-center rounded-full transition-colors bg-accent-600"
-                        title="Widget Access ON"
+                        title={t("onboarding.fakeChat.widgetAccessOn", undefined, "Widget Access ON")}
                     >
                         <span className="absolute inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-8" />
                         <span className="relative z-10 text-xs text-white transition-all ml-2.5 mr-6 text-left font-bold">
-                            ON
+                            {t("common.on", undefined, "On").toUpperCase()}
                         </span>
                     </button>
                 </div>
 
                 <button
                     className="text-gray-400 transition-colors p-1 rounded flex-shrink-0 ml-2 focus:outline-none"
-                    title="More options"
+                    title={t("onboarding.fakeChat.moreOptions", undefined, "More options")}
                 >
                     <i className="fa fa-ellipsis-vertical"></i>
                 </button>

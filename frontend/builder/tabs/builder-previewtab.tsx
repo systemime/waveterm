@@ -5,6 +5,7 @@ import { WaveAIModel } from "@/app/aipanel/waveai-model";
 import { BuilderAppPanelModel } from "@/builder/store/builder-apppanel-model";
 import { BuilderBuildPanelModel } from "@/builder/store/builder-buildpanel-model";
 import { atoms } from "@/store/global";
+import { t } from "@/util/i18n";
 import { useAtomValue } from "jotai";
 import { memo, useState } from "react";
 
@@ -14,14 +15,19 @@ const EmptyStateView = memo(() => {
             <div className="flex flex-col items-center gap-6 max-w-[500px] text-center px-8">
                 <div className="text-6xl">🏗️</div>
                 <div className="flex flex-col gap-3">
-                    <h2 className="text-2xl font-semibold text-primary">No App to Preview</h2>
+                    <h2 className="text-2xl font-semibold text-primary">
+                        {t("builder.preview.noAppToPreviewTitle", undefined, "No App to Preview")}
+                    </h2>
                     <p className="text-base text-secondary leading-relaxed">
-                        Get started by using the AI chat interface on the left to create your WaveApp. Describe what you
-                        want to build, and the AI will help you generate the code.
+                        {t(
+                            "builder.preview.noAppToPreviewBody",
+                            undefined,
+                            "Get started by using the AI chat interface on the left to create your WaveApp. Describe what you want to build, and the AI will help you generate the code."
+                        )}
                     </p>
                 </div>
                 <div className="text-base text-secondary mt-2">
-                    Your app will appear here once <span className="font-mono">app.go</span> is created
+                    {t("builder.preview.appWillAppearWhenAppGoCreated", undefined, "Your app will appear here once app.go is created")}
                 </div>
             </div>
         </div>
@@ -31,7 +37,7 @@ const EmptyStateView = memo(() => {
 EmptyStateView.displayName = "EmptyStateView";
 
 const ErrorStateView = memo(({ errorMsg }: { errorMsg: string }) => {
-    const displayMsg = errorMsg && errorMsg.trim() ? errorMsg : "Unknown Error";
+    const displayMsg = errorMsg && errorMsg.trim() ? errorMsg : t("builder.preview.unknownError", undefined, "Unknown Error");
     const waveAIModel = WaveAIModel.getInstance();
     const buildPanelModel = BuilderBuildPanelModel.getInstance();
     const appPanelModel = BuilderAppPanelModel.getInstance();
@@ -43,7 +49,7 @@ const ErrorStateView = memo(({ errorMsg }: { errorMsg: string }) => {
     const getBuildContext = () => {
         const filteredLines = outputLines.filter((line) => !line.startsWith("[debug]"));
         const buildOutput = filteredLines.join("\n").trim();
-        return `Build Error:\n\`\`\`\n${displayMsg}\n\`\`\`\n\nBuild Output:\n\`\`\`\n${buildOutput}\n\`\`\``;
+        return `${t("builder.aiContext.buildErrorLabel", undefined, "Build Error:")}\n\`\`\`\n${displayMsg}\n\`\`\`\n\n${t("builder.aiContext.buildOutputLabel", undefined, "Build Output:")}\n\`\`\`\n${buildOutput}\n\`\`\``;
     };
 
     const handleAddToContext = () => {
@@ -54,7 +60,7 @@ const ErrorStateView = memo(({ errorMsg }: { errorMsg: string }) => {
 
     const handleAskAIToFix = async () => {
         const context = getBuildContext();
-        waveAIModel.appendText("Please help me fix this build error:\n\n" + context, true);
+        waveAIModel.appendText(t("builder.preview.askAIToFixPrompt", undefined, "Please help me fix this build error:\n\n") + context, true);
         await waveAIModel.handleSubmit();
     };
 
@@ -68,10 +74,15 @@ const ErrorStateView = memo(({ errorMsg }: { errorMsg: string }) => {
                 <div className="flex flex-col items-center gap-6 max-w-2xl text-center px-8">
                     <div className="text-6xl">🔐</div>
                     <div className="flex flex-col gap-3">
-                        <h2 className="text-2xl font-semibold text-error">Secrets Required</h2>
+                        <h2 className="text-2xl font-semibold text-error">
+                            {t("builder.preview.secretsRequiredTitle", undefined, "Secrets Required")}
+                        </h2>
                         <p className="text-base text-secondary leading-relaxed">
-                            This app requires secrets that must be configured. Please use the Secrets tab to set and bind
-                            the required secrets for your app to run.
+                            {t(
+                                "builder.preview.secretsRequiredBody",
+                                undefined,
+                                "This app requires secrets that must be configured. Please use the Secrets tab to set and bind the required secrets for your app to run."
+                            )}
                         </p>
                         <div className="text-left bg-panel border border-error/30 rounded-lg p-4 max-h-96 overflow-auto mt-2">
                             <pre className="text-sm text-secondary whitespace-pre-wrap font-mono">{displayMsg}</pre>
@@ -80,7 +91,7 @@ const ErrorStateView = memo(({ errorMsg }: { errorMsg: string }) => {
                             onClick={handleGoToSecrets}
                             className="px-6 py-2 mt-2 bg-accent/80 text-primary font-semibold rounded hover:bg-accent transition-colors cursor-pointer"
                         >
-                            Go to Secrets Tab
+                            {t("builder.preview.goToSecretsTab", undefined, "Go to Secrets Tab")}
                         </button>
                     </div>
                 </div>
@@ -92,7 +103,7 @@ const ErrorStateView = memo(({ errorMsg }: { errorMsg: string }) => {
         <div className="w-full h-full flex items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-6 max-w-2xl text-center px-8">
                 <div className="flex flex-col gap-3">
-                    <h2 className="text-2xl font-semibold text-error">Build Error</h2>
+                    <h2 className="text-2xl font-semibold text-error">{t("builder.preview.buildErrorTitle", undefined, "Build Error")}</h2>
                     <div className="text-left bg-panel border border-error/30 rounded-lg p-4 max-h-96 overflow-auto">
                         <pre className="text-sm text-secondary whitespace-pre-wrap font-mono">{displayMsg}</pre>
                     </div>
@@ -102,13 +113,13 @@ const ErrorStateView = memo(({ errorMsg }: { errorMsg: string }) => {
                                 onClick={handleAddToContext}
                                 className="px-4 py-2 bg-panel text-primary border border-border rounded hover:bg-panel/80 transition-colors cursor-pointer"
                             >
-                                Add Error to AI Context
+                                {t("builder.preview.addErrorToAIContext", undefined, "Add Error to AI Context")}
                             </button>
                             <button
                                 onClick={handleAskAIToFix}
                                 className="px-4 py-2 bg-accent/80 text-primary font-semibold rounded hover:bg-accent transition-colors cursor-pointer"
                             >
-                                Ask AI to Fix
+                                {t("builder.preview.askAIToFix", undefined, "Ask AI to Fix")}
                             </button>
                         </div>
                     )}
@@ -126,9 +137,15 @@ const BuildingStateView = memo(() => {
             <div className="flex flex-col items-center gap-6 max-w-[500px] text-center px-8">
                 <div className="text-6xl">⚙️</div>
                 <div className="flex flex-col gap-3">
-                    <h2 className="text-2xl font-semibold text-primary">App is Building...</h2>
+                    <h2 className="text-2xl font-semibold text-primary">
+                        {t("builder.preview.appIsBuildingTitle", undefined, "App is Building...")}
+                    </h2>
                     <p className="text-base text-secondary leading-relaxed">
-                        Your WaveApp is being compiled and prepared. This may take a few moments.
+                        {t(
+                            "builder.preview.appIsBuildingBody",
+                            undefined,
+                            "Your WaveApp is being compiled and prepared. This may take a few moments."
+                        )}
                     </p>
                 </div>
             </div>
@@ -151,9 +168,15 @@ const StoppedStateView = memo(({ onStart }: { onStart: () => void }) => {
         <div className="w-full h-full flex items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-6 max-w-[500px] text-center px-8">
                 <div className="flex flex-col gap-3">
-                    <h2 className="text-2xl font-semibold text-primary">App is Not Running</h2>
+                    <h2 className="text-2xl font-semibold text-primary">
+                        {t("builder.preview.appIsNotRunningTitle", undefined, "App is Not Running")}
+                    </h2>
                     <p className="text-base text-secondary leading-relaxed">
-                        Your WaveApp is currently not running. Click the button below to start it.
+                        {t(
+                            "builder.preview.appIsNotRunningBody",
+                            undefined,
+                            "Your WaveApp is currently not running. Click the button below to start it."
+                        )}
                     </p>
                 </div>
                 {!isStarting && (
@@ -161,10 +184,10 @@ const StoppedStateView = memo(({ onStart }: { onStart: () => void }) => {
                         onClick={handleStart}
                         className="px-6 py-2 bg-accent text-primary font-semibold rounded hover:bg-accent/80 transition-colors cursor-pointer"
                     >
-                        Start App
+                        {t("builder.preview.startApp", undefined, "Start App")}
                     </button>
                 )}
-                {isStarting && <div className="text-base text-success">Starting...</div>}
+                {isStarting && <div className="text-base text-success">{t("builder.preview.starting", undefined, "Starting...")}</div>}
             </div>
         </div>
     );

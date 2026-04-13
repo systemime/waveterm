@@ -6,6 +6,7 @@ import { newLayoutNode } from "../lib/layoutNode";
 import { computeMoveNode, moveNode } from "../lib/layoutTree";
 import {
     DropDirection,
+    FlexDirection,
     LayoutTreeActionType,
     LayoutTreeComputeMoveNodeAction,
     LayoutTreeMoveNodeAction,
@@ -13,51 +14,57 @@ import {
 import { newLayoutTreeState } from "./model";
 
 test("layoutTreeStateReducer - compute move", () => {
-    const nodeA = newLayoutNode(undefined, undefined, undefined, { blockId: "nodeA" });
     const node1 = newLayoutNode(undefined, undefined, undefined, { blockId: "node1" });
     const node2 = newLayoutNode(undefined, undefined, undefined, { blockId: "node2" });
-    const treeState = newLayoutTreeState(newLayoutNode(undefined, undefined, [nodeA, node1, node2]));
-    assert(treeState.rootNode.children!.length === 3, "root should have three children");
+    const treeState = newLayoutTreeState(newLayoutNode(undefined, undefined, [node1, node2]));
+
     let pendingAction = computeMoveNode(treeState, {
         type: LayoutTreeActionType.ComputeMove,
-        nodeId: treeState.rootNode.id,
+        nodeId: node2.id,
         nodeToMoveId: node1.id,
         direction: DropDirection.Bottom,
     });
+
+    assert(pendingAction, "moving an existing sibling should produce a pendingAction");
     const insertOperation = pendingAction as LayoutTreeMoveNodeAction;
     assert(insertOperation.node === node1, "insert operation node should equal node1");
-    assert(!insertOperation.parentId, "insert operation parent should not be defined");
-    assert(insertOperation.index === 1, "insert operation index should equal 1");
-    assert(insertOperation.insertAtRoot, "insert operation insertAtRoot should be true");
+    assert(insertOperation.parentId === treeState.rootNode.id, "insert operation parent should be the root");
+    assert(insertOperation.index === 2, "insert operation index should equal 2");
+    assert(!insertOperation.insertAtRoot, "insert operation insertAtRoot should be false");
     moveNode(treeState, insertOperation);
     assert(
-        treeState.rootNode.data === undefined && treeState.rootNode.children!.length === 3,
-        "root node should still have three children"
+        treeState.rootNode.children?.map((child) => child.data?.blockId).join(",") === "node2,node1",
+        "moving node1 below node2 should reorder the root children"
     );
-    assert(treeState.rootNode.children![1].data!.blockId === "node1", "root's second child should be node1");
+
+    treeState.rootNode.children![0].flexDirection = FlexDirection.Column;
+    treeState.rootNode.children![0].children = [newLayoutNode(undefined, undefined, undefined, { blockId: "node2a" })];
+    treeState.rootNode.children![0].data = undefined;
 
     pendingAction = computeMoveNode(treeState, {
         type: LayoutTreeActionType.ComputeMove,
-        nodeId: node1.id,
-        nodeToMoveId: node2.id,
+        nodeId: treeState.rootNode.children![0].id,
+        nodeToMoveId: node1.id,
         direction: DropDirection.Bottom,
     });
+
+    assert(pendingAction, "moving an existing node into a container should produce a pendingAction");
     const insertOperation2 = pendingAction as LayoutTreeMoveNodeAction;
-    assert(insertOperation2.node === node2, "insert operation node should equal node2");
-    assert(insertOperation2.parentId === node1.id, "insert operation parent id should be node1 id");
+    assert(insertOperation2.node === node1, "insert operation node should still equal node1");
+    assert(insertOperation2.parentId === treeState.rootNode.children![0].id, "insert operation parent should be node2");
     assert(insertOperation2.index === 1, "insert operation index should equal 1");
     assert(!insertOperation2.insertAtRoot, "insert operation insertAtRoot should be false");
     moveNode(treeState, insertOperation2);
+    assert(treeState.rootNode.children!.length === 1, "root should have one child after moving node1 into node2");
     assert(
-        treeState.rootNode.data === undefined && (treeState.rootNode.children!.length as number) === 2,
-        "root node should now have two children after node2 moved into node1"
+        treeState.rootNode.children![0].children?.map((child) => child.data?.blockId).join(",") === "node2a,node1",
+        "node2 should contain its original child followed by node1"
     );
-    assert(treeState.rootNode.children![1].children!.length === 2, "root's second child should now have two children");
 });
 
 test("computeMove - noop action", () => {
-    const nodeToMove = newLayoutNode(undefined, undefined, undefined, { blockId: "nodeToMove" });
-    const treeState = newLayoutTreeState(
+    let nodeToMove = newLayoutNode(undefined, undefined, undefined, { blockId: "nodeToMove" });
+    let treeState = newLayoutTreeState(
         newLayoutNode(undefined, undefined, [
             nodeToMove,
             newLayoutNode(undefined, undefined, undefined, { blockId: "otherNode" }),

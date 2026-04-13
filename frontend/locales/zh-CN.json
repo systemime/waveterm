@@ -1,0 +1,716 @@
+{
+    "app": {
+        "windowTitle": "Wave 终端",
+        "windowTitleWithTab": "Wave 终端 - {{tabName}}",
+        "builderTitle": "WaveApp 构建器",
+        "builderTitleWithAppId": "WaveApp 构建器 ({{appId}})",
+        "menu": {
+            "cut": "剪切",
+            "copy": "复制",
+            "paste": "粘贴",
+            "openClipboardUrl": "打开剪贴板链接 ({{hostname}})"
+        },
+        "flashError": {
+            "copyHint": "点击复制错误信息"
+        },
+        "invalidConfig": "配置无效，未能加载客户端或窗口"
+    },
+    "common": {
+        "cancel": "取消",
+        "ok": "确定",
+        "next": "下一步",
+        "previous": "上一步",
+        "getStarted": "开始使用",
+        "stepCounter": "第 {{current}} / {{total}} 步",
+        "loading": "加载中...",
+        "refresh": "刷新",
+        "copy": "复制",
+        "close": "关闭",
+        "search": "搜索",
+        "default": "默认",
+        "on": "开启",
+        "off": "关闭",
+        "clear": "清空",
+        "start": "启动"
+    },
+    "modal": {
+        "closeEsc": "关闭 (ESC)"
+    },
+    "about": {
+        "title": "Wave Terminal",
+        "taglineLine1": "开源 AI 原生终端",
+        "taglineLine2": "为流畅工作流而生",
+        "clientVersion": "客户端版本 {{version}}（{{build}}）",
+        "updateChannel": "更新通道：{{channel}}",
+        "github": "GitHub",
+        "website": "网站",
+        "acknowledgements": "鸣谢"
+    },
+    "updater": {
+        "available": "发现可用更新",
+        "downloading": "正在下载更新",
+        "installing": "正在安装更新",
+        "errorTryAgain": "更新器出错：请稍后重试",
+        "clickToInstall": "点击安装更新"
+    },
+    "workspaceSwitcher": {
+        "switchWorkspace": "切换工作区",
+        "openWorkspace": "打开工作区",
+        "createWorkspace": "创建新工作区",
+        "saveWorkspace": "保存工作区",
+        "editWorkspace": "编辑工作区",
+        "currentWorkspace": "这是你当前的工作区",
+        "openWorkspaceWindow": "该工作区已打开"
+    },
+    "quickTips": {
+        "headerIcons": "顶部图标",
+        "magnifyBlock": "放大区块",
+        "connectRemote": "连接远程服务器",
+        "blockSettings": "区块设置",
+        "closeBlock": "关闭区块",
+        "importantKeybindings": "常用快捷键",
+        "mainKeybindings": "主要快捷键",
+        "newTab": "新建标签页",
+        "newTerminalBlock": "新建终端区块",
+        "openAIPanel": "打开 Wave AI 面板",
+        "tabSwitching": "标签切换（{{shortcut}}）",
+        "switchToNthTab": "切换到第 N 个标签页",
+        "previousTab": "上一个标签页",
+        "nextTab": "下一个标签页",
+        "blockNavigation": "区块导航（Ctrl-Shift）",
+        "navigateBlocks": "在区块之间移动",
+        "focusNthBlock": "聚焦第 N 个区块",
+        "focusWaveAI": "聚焦 Wave AI",
+        "splitBlocks": "分割区块",
+        "splitRight": "向右分割",
+        "splitBelow": "向下分割",
+        "splitDirection": "按方向分割",
+        "wshCommands": "wsh 命令",
+        "previewCommand": "预览文件、目录或网页 URL",
+        "editCommand": "编辑配置文件和代码文件",
+        "moreTips": "更多技巧",
+        "tabsTipLabel": "标签页",
+        "tabsTipBody": "右键任意标签页即可更改背景或重命名。",
+        "webViewTipLabel": "网页视图",
+        "webViewTipBody": "点击网页视图中的齿轮可设置首页",
+        "terminalTipLabel": "终端",
+        "terminalTipBody": "点击终端中的齿轮可设置终端主题和字体大小",
+        "needMoreHelp": "还需要帮助？",
+        "joinDiscord": "加入 Discord 社区",
+        "configOptions": "配置选项",
+        "allKeybindings": "全部快捷键",
+        "fullDocs": "完整文档",
+        "numberRange": "数字 (1-9)",
+        "cmdKey": "Cmd",
+        "altKey": "Alt",
+        "ctrlKey": "Ctrl",
+        "shiftKey": "Shift"
+    },
+    "aiPanel": {
+        "outputTokens": {
+            "24k": "24k",
+            "64kPro": "64k（专业版）",
+            "1kDevTesting": "1k（开发测试）",
+            "4k": "4k",
+            "16kPro": "16k（专业版）"
+        }
+    },
+    "onboarding": {
+        "welcomeTitle": "欢迎使用 Wave Terminal",
+        "supportGithubTitle": "在 GitHub 上支持我们",
+        "supportGithubBody": "我们是开源项目，致力于为个人用户提供免费的终端。欢迎前往",
+        "githubRepoLabel": "GitHub（wavetermdev/waveterm）",
+        "communityTitle": "加入社区",
+        "communityBody": "获取帮助、提交功能需求、报告问题，或与其他终端爱好者交流。",
+        "communityLink": "加入 Wave Discord 频道",
+        "fakeChat": {
+            "thinking": "AI 正在思考...",
+            "context": "上下文",
+            "widgetAccessOn": "组件访问已开启",
+            "moreOptions": "更多选项"
+        },
+        "privacyBody": "匿名使用数据可以帮助我们改进你真正会用到的功能。",
+        "privacyPolicy": "隐私政策",
+        "telemetryEnabled": "已启用",
+        "telemetryDisabled": "已禁用",
+        "continue": "继续",
+        "telemetryDisabledTitle": "遥测已关闭 ✓",
+        "telemetryDisabledLead": "没问题，我们尊重你的隐私。",
+        "telemetryDisabledBody": "但如果没有使用数据，我们就很难判断哪些功能真正有价值。给项目一个 GitHub Star，也能帮助我们知道 Wave 值得长期维护。",
+        "starGithub": "去 GitHub 点 Star",
+        "maybeLater": "稍后再说",
+        "waveAITitle": "Wave AI",
+        "waveAIBody": "Wave AI 是具备上下文感知能力的终端助手。它可以读取终端输出、分析部件、读写文件，帮助你更快解决问题。",
+        "waveAIToggleButton": "你可以通过顶部栏左上角的",
+        "waveAIToggleButtonSuffix": "按钮来切换 Wave AI 面板",
+        "waveAIShortcut": "也可以使用快捷键 {{shortcut}} 快速切换",
+        "waveAIProviders": "你可以使用自己的 API Key，或接入 Ollama、LM Studio 等本地模型以及其他兼容 OpenAI 的提供方",
+        "durableTitle": "持久化 SSH 会话",
+        "durableBadge": "SSH 会话，持续受保护",
+        "durableLead": "合上笔记本、切换网络、重启 Wave，你的远程会话仍会继续运行。",
+        "durableState": "Shell 状态、运行中的程序和终端历史都会被保留",
+        "durableReconnect": "连接恢复后，会话会自动重连",
+        "durableBuffer": "缓冲输出会补回，不会漏掉任何一行",
+        "durableSummary": "tmux 级别的持久性，直接内建在你的终端里。看到盾牌图标时，就可以为任意 SSH 会话启用持久化。",
+        "magnifyTitle": "放大区块",
+        "magnifyLead": "放大任意区块，将注意力集中在最重要的内容上。终端、编辑器和预览都能展开到更舒适的查看尺寸。",
+        "magnifyEfficiency": "面对复杂输出和大文件时，放大功能会明显提升处理效率。",
+        "magnifyHeaderIcon": "你也可以点击区块标题栏中的",
+        "magnifyHeaderIconSuffix": "图标来放大区块。",
+        "magnifyShortcut": "按一次 {{shortcut}}-M 放大，再按一次 {{shortcut}}-M 还原",
+        "filesTitle": "查看/编辑文件",
+        "filesLead": "Wave 可以在本地和远程机器上预览 Markdown、图片和视频文件。",
+        "filesView": "使用",
+        "filesViewSuffix": "可以在 Wave 的图形化查看器中预览文件",
+        "filesEdit": "使用",
+        "filesEditSuffix": "可以在 Wave 的图形化编辑器中打开配置文件或代码文件",
+        "filesSummary": "这些命令在本地和远程机器上都能无缝工作，让你无论文件在哪里都能轻松查看和编辑。",
+        "skipFeatureTour": "跳过功能导览 >",
+        "upgrade": {
+            "minor": {
+                "welcomeTitle": "欢迎使用 Wave v0.14！",
+                "waveAiBadge": "Wave AI",
+                "waveAiLead": "Wave AI 是你的全上下文终端助手。它可以读取终端输出、分析小组件、读写文件，并帮助你更快解决问题。",
+                "newInV013Label": "v0.13 新增：",
+                "newInV013Body": "Wave AI 现已支持本地模型和自带密钥（BYOK）！你可以使用 Ollama、LM Studio、vLLM、OpenRouter，或任何兼容 OpenAI 的提供方。",
+                "newInV014Label": "v0.14 新增：",
+                "newInV014Body": "持久化 SSH 会话可在断网、笔记本休眠和重启后继续，无需 tmux 或 screen。",
+                "thanksTitle": "感谢你成为 Wave 的早期用户！⭐",
+                "thanksBody": "给 GitHub 点个 Star，就是对 Wave（以及开源）的支持，也能帮助我们触达更多开发者。",
+                "alreadyStarred": "已点 Star",
+                "starNow": "现在去点 Star"
+            },
+            "patch": {
+                "modalTitle": "Wave {{version}} 更新",
+                "prevVersion": "上一页（{{version}}）",
+                "nextVersion": "下一页（{{version}}）"
+            },
+            "v0121": {
+                "lead": "该补丁版本聚焦于 Shell 集成改进、Wave AI 增强，以及恢复代码编辑器区块中的语法高亮。",
+                "shell": {
+                    "title": "Shell 集成与上下文",
+                    "item1Title": "支持 OSC 7",
+                    "item1Body": "Wave 现在会自动跟踪并恢复当前目录，重启后在 bash、zsh、fish、pwsh 中仍可保持。",
+                    "item2Title": "Shell 上下文跟踪",
+                    "item2Body": "跟踪 Shell 是否就绪、最近执行命令与退出码，便于更好管理终端。"
+                },
+                "ai": {
+                    "title": "Wave AI 改进",
+                    "item1": "等待 AI 响应时可显示推理摘要。",
+                    "item2": "增强终端上下文：AI 现在可以访问 Shell 状态、当前目录、命令历史与退出码。",
+                    "item3": "为 AI 响应新增反馈按钮（赞/踩）。",
+                    "item4": "新增复制按钮，可快速复制 AI 响应到剪贴板。"
+                },
+                "other": {
+                    "title": "其他变更",
+                    "item1": "Web 小组件支持移动端 User-Agent 模拟。",
+                    "item2": "修复代码编辑器中头部按钮的内边距问题。",
+                    "item3": "恢复代码编辑器预览区块的语法高亮。"
+                }
+            },
+            "v0122": {
+                "lead": "Wave AI 现在可以创建和修改文件，支持可视化差异预览与便捷回滚，同时带来性能优化与缺陷修复。",
+                "fileEditing": {
+                    "title": "Wave AI 文件编辑",
+                    "item1Title": "文件写入工具",
+                    "item1Body": "Wave AI 现在可在你确认后创建和修改文件。",
+                    "item2Title": "可视化差异预览",
+                    "item2Body": "批准编辑前可先查看将发生的具体变更。",
+                    "item3Title": "便捷回滚",
+                    "item3Body": "通过简单的“Revert File”按钮即可撤销文件改动。"
+                },
+                "ai": {
+                    "title": "更多 AI 改进",
+                    "item1": "可将预览器中的文件直接拖放到 Wave AI。",
+                    "item2Prefix": "在",
+                    "item2Suffix": "命令中支持目录列表。",
+                    "item3": "每个会话可调节思考级别与最大输出 token。",
+                    "item4": "改进工具描述与输入校验。"
+                },
+                "bugfix": {
+                    "title": "缺陷修复与改进",
+                    "item1": "修复 RPC 系统中的严重内存泄漏。",
+                    "item2": "恢复配置文件 schema 校验。",
+                    "item3": "修复 PowerShell 5.x 回归问题。"
+                }
+            },
+            "v0123": {
+                "lead": "Wave AI 模型升级到 GPT-5.1，新增密钥管理能力，并改进交互式 CLI 工具的终端输入处理。",
+                "ai": {
+                    "title": "Wave AI 更新",
+                    "item1Title": "GPT-5.1 模型",
+                    "item1Body": "升级到 OpenAI 的 GPT-5.1 模型，响应效果更好。",
+                    "item2Title": "思考模式切换",
+                    "item2Body": "新增下拉选择，可在 Quick、Balanced、Deep 间切换。",
+                    "item3": "修复恢复 AI 文件写入备份时的路径不一致问题。"
+                },
+                "terminal": {
+                    "title": "终端改进",
+                    "item1Title": "增强输入处理",
+                    "item1Body": "改进对 Claude Code 等 CLI 工具的支持。",
+                    "item2Title": "支持粘贴图片",
+                    "item2Body": "可直接向终端粘贴图片（会保存为临时文件）。",
+                    "item3": "Shift+Enter 现在默认插入换行，便于多行命令输入。",
+                    "item4": "修复切换输入法（IME）时文本重复问题。"
+                },
+                "secret": {
+                    "title": "密钥存储",
+                    "item1Title": "密钥管理小组件",
+                    "item1Body": "可安全存储和管理敏感凭据。",
+                    "item2Prefix": "可通过 CLI",
+                    "item2Suffix": "命令访问密钥。"
+                }
+            },
+            "v0130": {
+                "lead": "Wave v0.13 带来本地 AI 支持、自带密钥（BYOK）、全新配置系统，以及终端功能增强。",
+                "ai": {
+                    "title": "本地 AI 与 BYOK",
+                    "item1Title": "兼容 OpenAI 的 API",
+                    "item1Body": "可连接 Ollama、LM Studio、vLLM、OpenRouter 等本地或托管模型。",
+                    "item2Title": "Google Gemini",
+                    "item2Body": "原生支持 Gemini 模型。",
+                    "item3Title": "提供方预设",
+                    "item3Body": "内置 OpenAI、OpenRouter、Google、Azure 及自定义端点配置。",
+                    "item4Title": "多 AI 模式",
+                    "item4Body": "可在不同模型与提供方间轻松切换。"
+                },
+                "config": {
+                    "title": "配置小组件",
+                    "item1Title": "全新配置界面",
+                    "item1Body": "侧边栏可直接打开专用配置小组件。",
+                    "item2Title": "更好的组织方式",
+                    "item2Body": "以更好的校验与错误处理来浏览和编辑设置。",
+                    "item3Title": "集成密钥管理",
+                    "item3Body": "可在配置小组件中管理 API Key 与凭据。"
+                },
+                "terminal": {
+                    "title": "终端更新",
+                    "item1Title": "Bracketed Paste 模式",
+                    "item1Body": "默认启用，提升多行粘贴体验。",
+                    "item2Title": "Windows 粘贴修复",
+                    "item2Body": "在 Windows 上 Ctrl+V 现在按标准粘贴工作。",
+                    "item3Title": "SSH 密码存储",
+                    "item3Body": "可将 SSH 密码保存到 Wave 密钥存储中。"
+                }
+            },
+            "v0131": {
+                "lead": "Wave v0.13.1 重点改进 Windows 平台体验、Wave AI 视觉效果和终端导航能力。",
+                "windows": {
+                    "title": "Windows 平台增强",
+                    "item1Title": "集成式窗口布局",
+                    "item1Body": "界面更简洁，窗口控制按钮整合到标签栏头部。",
+                    "item2Title": "自动检测 Git Bash",
+                    "item2Body": "自动识别已安装的 Git Bash。",
+                    "item3Title": "SSH Agent 回退支持",
+                    "item3Body": "增强 Windows 下 SSH Agent 的可用性。",
+                    "item4Title": "更新聚焦快捷键",
+                    "item4Body": "Windows 上 Wave AI 聚焦快捷键改为 Alt:0。"
+                },
+                "ai": {
+                    "title": "Wave AI 更新",
+                    "item1Title": "视觉设计焕新",
+                    "item1Body": "完成整套 UI 刷新，并支持自定义背景透明效果。",
+                    "item2Title": "无遥测 BYOK",
+                    "item2Body": "Wave AI 现可在无需遥测的情况下使用自带密钥与本地模型。"
+                },
+                "terminal": {
+                    "title": "终端改进",
+                    "item1Title": "新增滚动快捷键",
+                    "item1Body": "新增 Shift+Home、Shift+End、Shift+PageUp、Shift+PageDown，导航更高效。"
+                }
+            },
+            "v0140": {
+                "lead": "Wave v0.14 引入 Durable Sessions。启用后，远程会话可在网络中断、电脑休眠和重启后继续存活，并在连接恢复时自动重连。",
+                "durable": {
+                    "title": "持久化 SSH 会话",
+                    "docs": "查看文档",
+                    "item1Title": "会话保护",
+                    "item1Body": "断线后程序与 Shell 状态依然保留。",
+                    "item2Title": "可视状态指示",
+                    "item2Body": "通过盾牌图标显示当前状态。",
+                    "item3Title": "灵活配置",
+                    "item3Body": "支持全局、连接级或终端级启用。"
+                },
+                "connection": {
+                    "title": "增强连接监控",
+                    "item1Title": "连接保活",
+                    "item1Body": "通过 keepalive 探针进行主动监控。",
+                    "item2Title": "阻塞连接检测",
+                    "item2Body": "网络异常时提供可视化反馈。"
+                },
+                "ai": {
+                    "title": "Wave AI 更新",
+                    "item1Title": "图片支持",
+                    "item1Body": "为 BYOK 提供方带来视觉能力支持。",
+                    "item2Title": "停止生成",
+                    "item2Body": "支持在生成过程中中止 AI 响应。",
+                    "item3Title": "改进自动滚动"
+                },
+                "terminal": {
+                    "title": "终端改进",
+                    "item1Title": "增强上下文菜单",
+                    "item1Body": "可快速访问分屏、主题等功能。",
+                    "item2Title": "OSC 52 剪贴板支持",
+                    "item2Body": "CLI 应用可复制内容到系统剪贴板。"
+                }
+            }
+        }
+    },
+    "tabBar": {
+        "configCleanTitle": "配置已恢复正常",
+        "configCleanBody": "当前配置中已不再检测到错误。",
+        "configErrorTitle": "配置错误",
+        "configErrorButton": "配置错误"
+    },
+    "tab": {
+        "loading": "标签页加载中",
+        "notFound": "未找到标签页",
+        "clearIndicator": "清除标签提示",
+        "clearAllIndicators": "清除全部提示",
+        "rename": "重命名标签页",
+        "copyTabId": "复制 TabId",
+        "backgrounds": "背景",
+        "close": "关闭标签页",
+        "activityNotification": "活动提醒"
+    },
+    "block": {
+        "magnify": "放大区块",
+        "unMagnify": "还原区块",
+        "copyBlockId": "复制 BlockId",
+        "closeBlock": "关闭区块",
+        "settings": "设置",
+        "addToLayout": "加入布局",
+        "noView": "无视图",
+        "noViewComponent": "缺少视图组件",
+        "errorRenderingViewHeader": "渲染视图标题时出错：{{error}}"
+    },
+    "connection": {
+        "moreThanADay": "超过一天",
+        "stalledTitle": "连接已卡住",
+        "stalledMessage": "与“{{connection}}”的连接已卡住",
+        "noActivityFor": "（{{elapsed}} 无活动）",
+        "disconnect": "断开连接",
+        "disconnectedFrom": "已从“{{connection}}”断开",
+        "connectingTo": "正在连接“{{connection}}”…",
+        "reconnect": "重新连接",
+        "errorPrefix": "错误：{{error}}",
+        "unableToUseWsh": "无法使用 wsh：{{error}}",
+        "alwaysDisableWsh": "始终禁用 wsh"
+    },
+    "durableSession": {
+        "learnMore": "了解更多",
+        "standard": {
+            "title": "标准 SSH 会话",
+            "body": "标准 SSH 会话在连接中断后会结束。持久化会话可以在网络切换、电脑休眠和 Wave 重启后继续保留你的 shell 状态、运行中的程序和历史记录。",
+            "restartAsDurable": "以持久化方式重启"
+        },
+        "attached": {
+            "title": "持久化会话（已附加）",
+            "body": "你的 shell 状态、运行中的程序和历史记录都已受到保护。即使网络断开，此会话也会继续保留。"
+        },
+        "detached": {
+            "title": "持久化会话（已分离）",
+            "body": "连接已断开，但你的会话仍在远程服务器上运行。连接恢复后，Wave 会自动重新连接。"
+        },
+        "awaitingConnection": {
+            "title": "持久化会话（等待连接）",
+            "body": "当前已配置为持久化会话。连接建立后，会话会自动启动。"
+        },
+        "awaitingStart": {
+            "title": "持久化会话（等待启动）",
+            "body": "当前已配置为持久化会话，但会话尚未启动。可点击下方手动启动。",
+            "startSession": "启动会话"
+        },
+        "starting": {
+            "title": "持久化会话（启动中）",
+            "body": "持久化会话正在启动。"
+        },
+        "ended": {
+            "title": "持久化会话（已结束）",
+            "body": "持久化会话已经结束，但该区块仍配置为持久化会话。"
+        },
+        "exited": {
+            "title": "持久化会话（已结束，已退出）",
+            "body": "Shell 已终止且不再运行，但该区块仍配置为持久化会话。"
+        },
+        "lost": {
+            "title": "持久化会话（已结束，已丢失）",
+            "body": "远程服务器上找不到该会话，可能是系统重启或会话被手动终止导致。"
+        },
+        "failed": {
+            "title": "持久化会话（启动失败）",
+            "body": "持久化会话启动失败。"
+        },
+        "restartSession": "重新启动会话",
+        "restartAsStandard": "以标准模式重启"
+    },
+    "search": {
+        "resultsAriaLabel": "搜索结果",
+        "previousResult": "上一个结果（Shift+Enter）",
+        "nextResult": "下一个结果（Enter）",
+        "regularExpression": "正则表达式",
+        "wholeWord": "完整单词",
+        "caseSensitive": "区分大小写"
+    },
+    "sysinfo": {
+        "gb": "GB",
+        "cpuPercent": "CPU %",
+        "memoryTotal": "总内存",
+        "memoryUsed": "已用内存",
+        "memoryFree": "空闲内存",
+        "memoryAvailable": "可用内存",
+        "core": "核心 {{index}}",
+        "plotType": "图表类型",
+        "time": "时间"
+    },
+    "emoji": {
+        "searchPlaceholder": "搜索表情...",
+        "noResults": "未找到表情"
+    },
+    "aiDiff": {
+        "viewerTitle": "AI 差异查看器",
+        "missingChatOrTool": "区块元数据缺少 chatId 或 toolCallId",
+        "missingFileName": "区块元数据缺少文件名",
+        "noDiffData": "服务端未返回差异数据",
+        "loadError": "加载差异数据出错：{{error}}",
+        "loading": "正在加载差异...",
+        "noDataAvailable": "没有可用的差异数据"
+    },
+    "notification": {
+        "title": "通知",
+        "cannotBeCleared": "不可清除",
+        "clickToCopy": "点击复制通知内容"
+    },
+    "connectionModal": {
+        "gitBash": "Git Bash"
+    },
+    "updateNotification": {
+        "availableTitle": "发现可用更新",
+        "availableBody": "有新版本更新可用，已可开始安装。",
+        "installNow": "立即安装",
+        "downloadingTitle": "正在下载更新",
+        "downloadingBody": "更新正在下载中。",
+        "downloadingAction": "下载中...",
+        "installingTitle": "正在安装更新",
+        "installingBody": "更新正在安装中。",
+        "installingAction": "安装中...",
+        "errorTitle": "更新出错",
+        "errorBody": "更新过程中发生错误。",
+        "retry": "重试更新"
+    },
+    "term": {
+        "sendToWaveAI": "发送到 Wave AI",
+        "openUrl": "打开链接（{{hostname}}）",
+        "openUrlExternal": "在外部浏览器中打开链接",
+        "splitHorizontally": "水平分割",
+        "splitVertically": "垂直分割",
+        "fileBrowser": "文件浏览器",
+        "transparentBackground": "透明背景",
+        "noTransparency": "不透明",
+        "defaultWithValue": "默认（{{value}}）",
+        "themes": "主题",
+        "fontSize": "字体大小",
+        "transparency": "透明度",
+        "allowBracketedPasteMode": "允许 Bracketed Paste 模式",
+        "forceRestartController": "强制重启控制器",
+        "clearOutputOnRestart": "重启时清空输出",
+        "runOnStartup": "启动时运行",
+        "debugConnection": "连接调试",
+        "info": "信息",
+        "verbose": "详细",
+        "sessionDurability": "会话持久化",
+        "restartSessionStandardMode": "以标准模式重启会话",
+        "restartSessionDurableMode": "以持久化模式重启会话",
+        "advanced": "高级",
+        "closeToolbar": "关闭工具栏"
+    },
+    "webview": {
+        "viewName": "网页",
+        "reset": "重置",
+        "mobileIPhone": "移动端：iPhone",
+        "mobileAndroid": "移动端：Android",
+        "copyUrlToClipboard": "复制 URL 到剪贴板",
+        "setBlockHomepage": "设为当前区块首页",
+        "setDefaultHomepage": "设为默认首页",
+        "userAgentType": "User Agent 类型",
+        "mobileUserAgentIPhone": "移动端 User Agent：iPhone",
+        "mobileUserAgentAndroid": "移动端 User Agent：Android",
+        "openInExternalBrowser": "在外部浏览器中打开",
+        "unhideNavigation": "显示导航栏",
+        "hideNavigation": "隐藏导航栏",
+        "setZoomFactor": "设置缩放比例",
+        "closeDevTools": "关闭开发者工具",
+        "openDevTools": "打开开发者工具",
+        "clearHistory": "清除历史记录",
+        "clearCookiesAndStorage": "清除 Cookie 和存储（所有网页组件）",
+        "bookmarks": {
+            "openBookmark": "打开书签...",
+            "noneConfigured": "尚未配置书签",
+            "editPromptPrefix": "编辑你的",
+            "editPromptSuffix": "文件以配置书签。",
+            "openFile": "打开 bookmarks.json",
+            "noMatches": "没有匹配的书签",
+            "editFile": "编辑 bookmarks.json"
+        }
+    },
+    "tsunami": {
+        "title": "Tsunami",
+        "stopWaveApp": "停止 WaveApp",
+        "restartWaveApp": "重启 WaveApp",
+        "restartAndRebuild": "重启 WaveApp 并强制重新构建",
+        "remixInBuilder": "在 Builder 中 Remix WaveApp",
+        "starting": "启动中..."
+    },
+    "waveAi": {
+        "usingLocalModel": "正在使用本地模型 @ {{baseUrl}}（{{modelName}}）",
+        "usingRemoteModel": "正在使用远程模型 @ {{baseUrl}}（{{modelName}}）",
+        "addPreset": "添加 AI 预设...",
+        "selectConfiguration": "选择 AI 配置",
+        "clearChatHistory": "清空聊天记录",
+        "askAnything": "问我任何问题..."
+    },
+    "builder": {
+        "runningDevBuild": "正在运行 Wave 开发版本",
+        "aiContext": {
+            "buildErrorLabel": "构建错误：",
+            "buildOutputLabel": "构建输出：",
+            "fromBuilderOutput": "来自构建输出："
+        },
+        "appSelection": {
+            "appNamePlaceholder": "my-app",
+            "create": "创建",
+            "createDraftFromLocalFailed": "从 {{appId}} 创建草稿失败：{{error}}",
+            "createNewWaveApp": "创建新 WaveApp",
+            "draftAppName": "{{name}}（草稿）",
+            "existingWaveApps": "现有 WaveApp",
+            "lastUpdated": "最后更新：{{time}}",
+            "loadAppsFailed": "加载应用失败",
+            "loadingApps": "正在加载应用...",
+            "nameInvalidCharsError": "仅允许字母、数字、连字符和下划线",
+            "nameMaxLengthError": "名称长度不能超过 {{max}} 个字符",
+            "or": "或",
+            "selectWaveAppToEdit": "选择要编辑的 WaveApp"
+        },
+        "buildOutput": {
+            "addToContext": "添加到上下文",
+            "debug": "调试",
+            "restartApp": "重启应用",
+            "sendOutputToAI": "发送输出给 AI",
+            "title": "构建输出",
+            "waitingForOutput": "等待输出..."
+        },
+        "code": {
+            "loadingAppGo": "正在加载 app.go...",
+            "noAppSelected": "未选择 builder 应用",
+            "save": "保存"
+        },
+        "common": {
+            "closeError": "关闭错误",
+            "moreOptions": "更多选项"
+        },
+        "configData": {
+            "appNotRunningBody": "要查看配置和数据，必须先运行 tsunami 应用。请先在预览标签页启动应用。",
+            "appNotRunningTitle": "应用未运行",
+            "config": "配置",
+            "copyConfig": "复制配置",
+            "copyData": "复制数据",
+            "data": "数据",
+            "errorLoadingDataTitle": "加载数据出错",
+            "fetchConfigFailed": "获取配置失败：{{statusText}}",
+            "fetchDataFailed": "获取数据失败：{{statusText}}",
+            "loadingData": "正在加载数据...",
+            "refresh": "刷新",
+            "title": "配置和数据"
+        },
+        "errors": {
+            "loadAppGoFailed": "加载 app.go 失败：{{error}}",
+            "saveAppGoFailed": "保存 app.go 失败：{{error}}",
+            "saveEnvVarsFailed": "保存环境变量失败：{{error}}",
+            "startBuilderFailed": "启动 builder 失败：{{error}}",
+            "switchBuilderAppFailed": "切换 builder 应用失败：{{error}}",
+            "unknownError": "未知错误"
+        },
+        "files": {
+            "addFile": "添加文件",
+            "dragAndDropHint": "将文件拖放到此处或点击“添加文件”。最大文件大小：{{maxSize}}",
+            "fileOptions": "文件选项",
+            "loadingFiles": "正在加载文件...",
+            "maxFileSizeError": "文件大小超过允许的最大值 {{maxSize}}",
+            "noFilesYet": "还没有文件。将文件拖放到此处或点击“添加文件”开始。",
+            "readOnlyGenerated": "由框架生成（只读）",
+            "refreshFileList": "刷新文件列表",
+            "staticFiles": "静态文件",
+            "rename": {
+                "currentName": "当前名称：{{name}}",
+                "fileNameCannotBeEmpty": "文件名不能为空",
+                "fileNameCannotContainSlash": "文件名不能包含 / 或 \\",
+                "rename": "重命名",
+                "renameFile": "重命名文件"
+            },
+            "delete": {
+                "cannotUndo": "此操作无法撤销。",
+                "confirmDelete": "确定要删除 {{fileName}} 吗？",
+                "delete": "删除",
+                "deleteFile": "删除文件"
+            }
+        },
+        "preview": {
+            "addErrorToAIContext": "将错误添加到 AI 上下文",
+            "appIsBuildingBody": "你的 WaveApp 正在编译和准备中，这可能需要一点时间。",
+            "appIsBuildingTitle": "应用正在构建...",
+            "appIsNotRunningBody": "你的 WaveApp 当前未运行。点击下方按钮即可启动。",
+            "appIsNotRunningTitle": "应用未运行",
+            "appWillAppearWhenAppGoCreated": "创建 app.go 后，应用会显示在这里",
+            "askAIToFix": "让 AI 修复",
+            "askAIToFixPrompt": "请帮我修复这个构建错误：\n\n",
+            "buildErrorTitle": "构建错误",
+            "goToSecretsTab": "前往 Secrets 标签页",
+            "noAppToPreviewBody": "先使用左侧 AI 聊天界面创建 WaveApp。描述你想构建的内容，AI 会帮助你生成代码。",
+            "noAppToPreviewTitle": "没有可预览的应用",
+            "secretsRequiredBody": "此应用需要配置 Secrets。请在 Secrets 标签页中设置并绑定所需 Secrets 以运行应用。",
+            "secretsRequiredTitle": "需要 Secrets",
+            "startApp": "启动应用",
+            "starting": "正在启动...",
+            "unknownError": "未知错误"
+        },
+        "publish": {
+            "failedTitle": "发布失败",
+            "noBuilderAppIdFound": "未找到 builder 应用 ID",
+            "overwriteWarning": "这将覆盖同名的现有应用。确定继续吗？",
+            "publish": "发布",
+            "publishApp": "发布应用",
+            "publishDestination": "将把你的应用发布到 {{appId}}",
+            "successBody": "你的应用已发布到 {{appId}}",
+            "successTitle": "应用发布成功"
+        },
+        "secrets": {
+            "errorSettingSecret": "设置 Secret 出错",
+            "manifestNotAvailable": "应用 manifest 不可用。应用成功构建后会显示 Secrets。",
+            "mapDefault": "映射默认值",
+            "mappingHint": "将应用 Secrets 映射到 Wave Secret 存储中的名称。应用运行前必须绑定所有必需 Secrets。修改会自动保存。",
+            "noSecretsDefined": "该应用 manifest 中未定义 Secrets。",
+            "optional": "可选",
+            "pasteSecretValue": "在此粘贴 Secret 值...",
+            "required": "必需",
+            "requiredNotBound": "还有必需的 Secret 尚未绑定。",
+            "saveBindingsFailed": "保存 Secret 绑定失败：{{error}}",
+            "secretBindingInvalid": "Secret 绑定无效",
+            "secretBindings": "Secret 绑定",
+            "secretHasValidMapping": "Secret 已有有效映射",
+            "secretName": "Secret 名称：{{name}}",
+            "secretNotMapped": "Secret 尚未映射",
+            "secureStorageHint": "Secrets 会安全存储在 Wave 的 Secret 存储中",
+            "setAndMap": "设置并映射",
+            "setAndMapDefault": "设置并映射默认值",
+            "setAndMapSecret": "设置并映射 Secret"
+        },
+        "switchApp": "切换应用",
+        "tabs": {
+            "code": "代码",
+            "configData": "配置/数据",
+            "files": "文件",
+            "preview": "预览",
+            "secrets": "Secrets"
+        }
+    }
+}

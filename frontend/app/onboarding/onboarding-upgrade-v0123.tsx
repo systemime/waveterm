@@ -1,13 +1,14 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { t } from "@/util/i18n";
+
 const UpgradeOnboardingModal_v0_12_3_Content = () => {
     return (
         <div className="flex flex-col items-start gap-6 w-full mb-4 unselectable">
             <div className="text-secondary leading-relaxed">
                 <p className="mb-0">
-                    Wave AI model upgrade to GPT-5.1, new secret management features, and improved terminal input
-                    handling for interactive CLI tools.
+                    {t("onboarding.upgrade.v0123.lead")}
                 </p>
             </div>
 
@@ -16,18 +17,20 @@ const UpgradeOnboardingModal_v0_12_3_Content = () => {
                     <i className="text-[24px] text-accent fa-solid fa-sparkles"></i>
                 </div>
                 <div className="flex flex-col items-start gap-2 flex-1">
-                    <div className="text-foreground text-base font-semibold leading-[18px]">Wave AI Updates</div>
+                    <div className="text-foreground text-base font-semibold leading-[18px]">
+                        {t("onboarding.upgrade.v0123.ai.title")}
+                    </div>
                     <div className="text-secondary leading-5">
                         <ul className="list-disc list-outside space-y-1 pl-5">
                             <li>
-                                <strong>GPT-5.1 Model</strong> - Upgraded to OpenAI's GPT-5.1 model for improved
-                                responses
+                                <strong>{t("onboarding.upgrade.v0123.ai.item1Title")}</strong> -{" "}
+                                {t("onboarding.upgrade.v0123.ai.item1Body")}
                             </li>
                             <li>
-                                <strong>Thinking Mode Toggle</strong> - New dropdown to select between Quick, Balanced,
-                                and Deep thinking modes
+                                <strong>{t("onboarding.upgrade.v0123.ai.item2Title")}</strong> -{" "}
+                                {t("onboarding.upgrade.v0123.ai.item2Body")}
                             </li>
-                            <li>Fixed path mismatch issue when restoring AI write file backups</li>
+                            <li>{t("onboarding.upgrade.v0123.ai.item3")}</li>
                         </ul>
                     </div>
                 </div>
@@ -38,18 +41,21 @@ const UpgradeOnboardingModal_v0_12_3_Content = () => {
                     <i className="text-[24px] text-accent fa-solid fa-terminal"></i>
                 </div>
                 <div className="flex flex-col items-start gap-2 flex-1">
-                    <div className="text-foreground text-base font-semibold leading-[18px]">Terminal Improvements</div>
+                    <div className="text-foreground text-base font-semibold leading-[18px]">
+                        {t("onboarding.upgrade.v0123.terminal.title")}
+                    </div>
                     <div className="text-secondary leading-5">
                         <ul className="list-disc list-outside space-y-1 pl-5">
                             <li>
-                                <strong>Enhanced Input Handling</strong> - Better support for CLI tools like Claude Code
+                                <strong>{t("onboarding.upgrade.v0123.terminal.item1Title")}</strong> -{" "}
+                                {t("onboarding.upgrade.v0123.terminal.item1Body")}
                             </li>
                             <li>
-                                <strong>Image Paste Support</strong> - Paste images directly into terminal (saved to
-                                temp files)
+                                <strong>{t("onboarding.upgrade.v0123.terminal.item2Title")}</strong> -{" "}
+                                {t("onboarding.upgrade.v0123.terminal.item2Body")}
                             </li>
-                            <li>Shift+Enter now inserts newlines by default for multi-line commands</li>
-                            <li>Fixed duplicate text issue when switching input methods (IME)</li>
+                            <li>{t("onboarding.upgrade.v0123.terminal.item3")}</li>
+                            <li>{t("onboarding.upgrade.v0123.terminal.item4")}</li>
                         </ul>
                     </div>
                 </div>
@@ -60,16 +66,19 @@ const UpgradeOnboardingModal_v0_12_3_Content = () => {
                     <i className="text-[24px] text-accent fa-solid fa-key"></i>
                 </div>
                 <div className="flex flex-col items-start gap-2 flex-1">
-                    <div className="text-foreground text-base font-semibold leading-[18px]">Secret Store</div>
+                    <div className="text-foreground text-base font-semibold leading-[18px]">
+                        {t("onboarding.upgrade.v0123.secret.title")}
+                    </div>
                     <div className="text-secondary leading-5">
                         <ul className="list-disc list-outside space-y-1 pl-5">
                             <li>
-                                <strong>Secret Management Widget</strong> - Store and manage sensitive credentials
-                                securely
+                                <strong>{t("onboarding.upgrade.v0123.secret.item1Title")}</strong> -{" "}
+                                {t("onboarding.upgrade.v0123.secret.item1Body")}
                             </li>
                             <li>
-                                Access secrets via CLI with <span className="font-mono">wsh secret list/get/set</span>{" "}
-                                commands
+                                {t("onboarding.upgrade.v0123.secret.item2Prefix")}{" "}
+                                <span className="font-mono">wsh secret list/get/set</span>{" "}
+                                {t("onboarding.upgrade.v0123.secret.item2Suffix")}
                             </li>
                         </ul>
                     </div>

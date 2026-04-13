@@ -16,6 +16,7 @@ import { BuilderSecretTab } from "@/builder/tabs/builder-secrettab";
 import { builderAppHasSelection } from "@/builder/utils/builder-focus-utils";
 import { ErrorBoundary } from "@/element/errorboundary";
 import { atoms } from "@/store/global";
+import { t } from "@/util/i18n";
 import { cn } from "@/util/util";
 import { useAtomValue } from "jotai";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
@@ -92,7 +93,7 @@ const ErrorStrip = memo(() => {
             <button
                 onClick={() => model.clearError()}
                 className="shrink-0 text-error hover:text-error/80 transition-colors cursor-pointer"
-                aria-label="Close error"
+                aria-label={t("builder.common.closeError", undefined, "Close error")}
             >
                 <i className="fa fa-xmark-large text-sm" />
             </button>
@@ -110,7 +111,7 @@ const PublishAppModal = memo(({ appName }: { appName: string }) => {
 
     const handlePublish = async () => {
         if (!builderAppId) {
-            setErrorMessage("No builder app ID found");
+            setErrorMessage(t("builder.publish.noBuilderAppIdFound", undefined, "No builder app ID found"));
             setState("error");
             return;
         }
@@ -131,15 +132,19 @@ const PublishAppModal = memo(({ appName }: { appName: string }) => {
 
     if (state === "success") {
         return (
-            <Modal className="p-4" onOk={handleClose} onClose={handleClose} okLabel="OK" cancelLabel="">
+            <Modal className="p-4" onOk={handleClose} onClose={handleClose} okLabel={t("common.ok", undefined, "OK")} cancelLabel="">
                 <div className="flex flex-col gap-4 mb-4">
                     <h2 className="text-xl font-semibold flex items-center gap-2">
                         <i className="fa fa-check-circle text-success" />
-                        App Published Successfully
+                        {t("builder.publish.successTitle", undefined, "App Published Successfully")}
                     </h2>
                     <div className="flex flex-col gap-3">
                         <p className="text-primary">
-                            Your app has been published to <span className="font-mono">{publishedAppId}</span>
+                            {t(
+                                "builder.publish.successBody",
+                                { appId: publishedAppId },
+                                "Your app has been published to {{appId}}"
+                            )}
                         </p>
                     </div>
                 </div>
@@ -149,11 +154,11 @@ const PublishAppModal = memo(({ appName }: { appName: string }) => {
 
     if (state === "error") {
         return (
-            <Modal className="p-4" onOk={handleClose} onClose={handleClose} okLabel="OK" cancelLabel="">
+            <Modal className="p-4" onOk={handleClose} onClose={handleClose} okLabel={t("common.ok", undefined, "OK")} cancelLabel="">
                 <div className="flex flex-col gap-4 mb-4">
                     <h2 className="text-xl font-semibold flex items-center gap-2">
                         <i className="fa fa-triangle-exclamation text-error" />
-                        Publish Failed
+                        {t("builder.publish.failedTitle", undefined, "Publish Failed")}
                     </h2>
                     <div className="flex flex-col gap-3">
                         <p className="text-error">{errorMessage}</p>
@@ -169,18 +174,26 @@ const PublishAppModal = memo(({ appName }: { appName: string }) => {
             onOk={handlePublish}
             onCancel={handleClose}
             onClose={handleClose}
-            okLabel="Publish"
-            cancelLabel="Cancel"
+            okLabel={t("builder.publish.publish", undefined, "Publish")}
+            cancelLabel={t("common.cancel", undefined, "Cancel")}
         >
             <div className="flex flex-col gap-4 mb-4">
-                <h2 className="text-xl font-semibold">Publish App</h2>
+                <h2 className="text-xl font-semibold">{t("builder.publish.publishApp", undefined, "Publish App")}</h2>
                 <div className="flex flex-col gap-3">
                     <p className="text-primary">
-                        This will publish your app to <span className="font-mono">local/{appName}</span>
+                        {t(
+                            "builder.publish.publishDestination",
+                            { appId: `local/${appName}` },
+                            "This will publish your app to {{appId}}"
+                        )}
                     </p>
                     <p className="text-warning">
                         <i className="fa fa-triangle-exclamation mr-2" />
-                        This will overwrite any existing app with the same name. Are you sure?
+                        {t(
+                            "builder.publish.overwriteWarning",
+                            undefined,
+                            "This will overwrite any existing app with the same name. Are you sure?"
+                        )}
                     </p>
                 </div>
             </div>
@@ -261,18 +274,18 @@ const BuilderAppPanel = memo(() => {
         (e: React.MouseEvent) => {
             const menu: ContextMenuItem[] = [
                 {
-                    label: "Publish App",
+                    label: t("builder.publish.publishApp", undefined, "Publish App"),
                     click: handlePublishClick,
                 },
                 {
                     type: "separator",
                 },
                 {
-                    label: "Switch App",
+                    label: t("builder.switchApp", undefined, "Switch App"),
                     click: handleSwitchAppClick,
                 },
             ];
-            ContextMenuModel.getInstance().showContextMenu(menu, e);
+            ContextMenuModel.showContextMenu(menu, e);
         },
         [handleSwitchAppClick, handlePublishClick]
     );
@@ -297,7 +310,7 @@ const BuilderAppPanel = memo(() => {
                 <div className="flex items-center justify-between">
                     <div className="flex">
                         <TabButton
-                            label="Preview"
+                            label={t("builder.tabs.preview", undefined, "Preview")}
                             tabType="preview"
                             isActive={activeTab === "preview"}
                             isAppFocused={isAppFocused}
@@ -305,21 +318,21 @@ const BuilderAppPanel = memo(() => {
                             showStatusDot={true}
                         />
                         <TabButton
-                            label="Code"
+                            label={t("builder.tabs.code", undefined, "Code")}
                             tabType="code"
                             isActive={activeTab === "code"}
                             isAppFocused={isAppFocused}
                             onClick={() => handleTabClick("code")}
                         />
                         <TabButton
-                            label="Config/Data"
+                            label={t("builder.tabs.configData", undefined, "Config/Data")}
                             tabType="configdata"
                             isActive={activeTab === "configdata"}
                             isAppFocused={isAppFocused}
                             onClick={() => handleTabClick("configdata")}
                         />
                         <TabButton
-                            label="Files"
+                            label={t("builder.tabs.files", undefined, "Files")}
                             tabType="files"
                             isActive={activeTab === "files"}
                             isAppFocused={isAppFocused}
@@ -327,7 +340,7 @@ const BuilderAppPanel = memo(() => {
                         />
                         {hasSecrets && (
                             <TabButton
-                                label="Secrets"
+                                label={t("builder.tabs.secrets", undefined, "Secrets")}
                                 tabType="secrets"
                                 isActive={activeTab === "secrets"}
                                 isAppFocused={isAppFocused}
@@ -340,12 +353,12 @@ const BuilderAppPanel = memo(() => {
                             className="px-3 py-1 text-sm font-medium rounded bg-accent/80 text-primary hover:bg-accent transition-colors cursor-pointer"
                             onClick={handlePublishClick}
                         >
-                            Publish App
+                            {t("builder.publish.publishApp", undefined, "Publish App")}
                         </button>
                         <button
                             className="px-2 py-1 text-sm font-medium rounded hover:bg-secondary/10 transition-colors cursor-pointer"
                             onClick={handleKebabClick}
-                            aria-label="More options"
+                            aria-label={t("builder.common.moreOptions", undefined, "More options")}
                         >
                             <i className="fa fa-ellipsis-vertical" />
                         </button>

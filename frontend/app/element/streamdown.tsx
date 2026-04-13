@@ -1,8 +1,9 @@
-// Copyright 2026, Command Line Inc.
+// Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CopyButton } from "@/app/element/copybutton";
 import { IconButton } from "@/app/element/iconbutton";
+import { t } from "@/util/i18n";
 import { cn, useAtomValueSafe } from "@/util/util";
 import type { Atom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -161,7 +162,7 @@ const CodeBlock = ({ children, onClickExecute, codeBlockMaxWidthAtom }: CodeBloc
             <div className="flex items-center justify-between pl-3 pr-2 pt-2 pb-1.5">
                 <span className="text-[11px] text-white/50">{language}</span>
                 <div className="flex items-center gap-2">
-                    <CopyButton onClick={handleCopy} title="Copy" />
+                    <CopyButton onClick={handleCopy} title={t("common.copy", undefined, "Copy")} />
                     {onClickExecute && (
                         <IconButton
                             decl={{
@@ -291,7 +292,7 @@ export const WaveStreamdown = ({
             },
             summary: () => null, // Don't render summary separately
             a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-                <a {...props} className="text-accent hover:underline" />
+                <a {...props} className="text-primary underline hover:text-primary/80" />
             ),
             strong: (props: React.HTMLAttributes<HTMLElement>) => (
                 <strong {...props} className="font-semibold text-secondary" />
@@ -313,12 +314,6 @@ export const WaveStreamdown = ({
                 code: false,
                 table: false,
                 mermaid: true,
-            }}
-            mermaid={{
-                config: {
-                    theme: "dark",
-                    darkMode: true,
-                },
             }}
             components={components}
         >

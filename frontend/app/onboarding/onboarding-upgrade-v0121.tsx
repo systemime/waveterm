@@ -1,13 +1,14 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { t } from "@/util/i18n";
+
 const UpgradeOnboardingModal_v0_12_1_Content = () => {
     return (
         <div className="flex flex-col items-start gap-6 w-full mb-4 unselectable">
             <div className="text-secondary leading-relaxed">
                 <p className="mb-0">
-                    Patch release focused on shell integration improvements, Wave AI enhancements, and restoring syntax
-                    highlighting in code editor blocks.
+                    {t("onboarding.upgrade.v0121.lead")}
                 </p>
             </div>
 
@@ -17,17 +18,17 @@ const UpgradeOnboardingModal_v0_12_1_Content = () => {
                 </div>
                 <div className="flex flex-col items-start gap-2 flex-1">
                     <div className="text-foreground text-base font-semibold leading-[18px]">
-                        Shell Integration & Context
+                        {t("onboarding.upgrade.v0121.shell.title")}
                     </div>
                     <div className="text-secondary leading-5">
                         <ul className="list-disc list-outside space-y-1 pl-5">
                             <li>
-                                <strong>OSC 7 Support</strong> - Wave now automatically tracks and restores your current
-                                directory across restarts for bash, zsh, fish, and pwsh shells
+                                <strong>{t("onboarding.upgrade.v0121.shell.item1Title")}</strong> -{" "}
+                                {t("onboarding.upgrade.v0121.shell.item1Body")}
                             </li>
                             <li>
-                                <strong>Shell Context Tracking</strong> - Tracks when your shell is ready, last command
-                                executed, and exit codes for better terminal management
+                                <strong>{t("onboarding.upgrade.v0121.shell.item2Title")}</strong> -{" "}
+                                {t("onboarding.upgrade.v0121.shell.item2Body")}
                             </li>
                         </ul>
                     </div>
@@ -40,17 +41,16 @@ const UpgradeOnboardingModal_v0_12_1_Content = () => {
                 </div>
                 <div className="flex flex-col items-start gap-2 flex-1">
                     <div className="text-foreground text-base font-semibold leading-[18px]">
-                        Wave AI Improvements
+                        {t("onboarding.upgrade.v0121.ai.title")}
                     </div>
                     <div className="text-secondary leading-5">
                         <ul className="list-disc list-outside space-y-1 pl-5">
-                            <li>Display reasoning summaries while waiting for AI responses</li>
+                            <li>{t("onboarding.upgrade.v0121.ai.item1")}</li>
                             <li>
-                                Enhanced terminal context - AI now has access to shell state, current directory, command
-                                history, and exit codes
+                                {t("onboarding.upgrade.v0121.ai.item2")}
                             </li>
-                            <li>Added feedback buttons (thumbs up/down) for AI responses</li>
-                            <li>Added copy button to easily copy AI responses to clipboard</li>
+                            <li>{t("onboarding.upgrade.v0121.ai.item3")}</li>
+                            <li>{t("onboarding.upgrade.v0121.ai.item4")}</li>
                         </ul>
                     </div>
                 </div>
@@ -61,12 +61,14 @@ const UpgradeOnboardingModal_v0_12_1_Content = () => {
                     <i className="text-[24px] text-accent fa-solid fa-wrench"></i>
                 </div>
                 <div className="flex flex-col items-start gap-2 flex-1">
-                    <div className="text-foreground text-base font-semibold leading-[18px]">Other Changes</div>
+                    <div className="text-foreground text-base font-semibold leading-[18px]">
+                        {t("onboarding.upgrade.v0121.other.title")}
+                    </div>
                     <div className="text-secondary leading-5">
                         <ul className="list-disc list-outside space-y-1 pl-5">
-                            <li>Mobile user agent emulation support for web widgets</li>
-                            <li>Fixed padding for header buttons in code editor</li>
-                            <li>Restored syntax highlighting in code editor preview blocks</li>
+                            <li>{t("onboarding.upgrade.v0121.other.item1")}</li>
+                            <li>{t("onboarding.upgrade.v0121.other.item2")}</li>
+                            <li>{t("onboarding.upgrade.v0121.other.item3")}</li>
                         </ul>
                     </div>
                 </div>

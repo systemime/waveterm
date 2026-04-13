@@ -1,12 +1,13 @@
-// Copyright 2026, Command Line Inc.
+// Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 import type { BlockNodeModel } from "@/app/block/blocktypes";
 import type { TabModel } from "@/app/store/tab-model";
+import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { DiffViewer } from "@/app/view/codeeditor/diffviewer";
-import type { WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
-import { globalStore } from "@/store/jotaiStore";
+import { globalStore, WOS } from "@/store/global";
+import { t } from "@/util/i18n";
 import { base64ToString } from "@/util/util";
 import * as jotai from "jotai";
 import { useEffect } from "react";
@@ -17,18 +18,10 @@ type DiffData = {
     fileName: string;
 };
 
-export type AiFileDiffEnv = WaveEnvSubset<{
-    rpc: {
-        WaveAIGetToolDiffCommand: WaveEnv["rpc"]["WaveAIGetToolDiffCommand"];
-    };
-    wos: WaveEnv["wos"];
-}>;
-
 export class AiFileDiffViewModel implements ViewModel {
     blockId: string;
     nodeModel: BlockNodeModel;
     tabModel: TabModel;
-    env: AiFileDiffEnv;
     viewType = "aifilediff";
     blockAtom: jotai.Atom<Block>;
     diffDataAtom: jotai.PrimitiveAtom<DiffData | null>;
@@ -38,17 +31,16 @@ export class AiFileDiffViewModel implements ViewModel {
     viewName: jotai.Atom<string>;
     viewText: jotai.Atom<string>;
 
-    constructor({ blockId, nodeModel, tabModel, waveEnv }: ViewModelInitType) {
+    constructor(blockId: string, nodeModel: BlockNodeModel, tabModel: TabModel) {
         this.blockId = blockId;
         this.nodeModel = nodeModel;
         this.tabModel = tabModel;
-        this.env = waveEnv as AiFileDiffEnv;
-        this.blockAtom = this.env.wos.getWaveObjectAtom<Block>(`block:${blockId}`);
+        this.blockAtom = WOS.getWaveObjectAtom<Block>(`block:${blockId}`);
         this.diffDataAtom = jotai.atom(null) as jotai.PrimitiveAtom<DiffData | null>;
         this.errorAtom = jotai.atom(null) as jotai.PrimitiveAtom<string | null>;
         this.loadingAtom = jotai.atom<boolean>(true);
         this.viewIcon = jotai.atom("file-lines");
-        this.viewName = jotai.atom("AI Diff Viewer");
+        this.viewName = jotai.atom(t("aiDiff.viewerTitle", undefined, "AI Diff Viewer"));
         this.viewText = jotai.atom((get) => {
             const diffData = get(this.diffDataAtom);
             return diffData?.fileName ?? "";
@@ -73,25 +65,34 @@ function AiFileDiffView({ blockId, model }: ViewComponentProps<AiFileDiffViewMod
             const fileName = blockData?.meta?.file;
 
             if (!chatId || !toolCallId) {
-                globalStore.set(model.errorAtom, "Missing chatId or toolCallId in block metadata");
+                globalStore.set(
+                    model.errorAtom,
+                    t("aiDiff.missingChatOrTool", undefined, "Missing chatId or toolCallId in block metadata")
+                );
                 globalStore.set(model.loadingAtom, false);
                 return;
             }
 
             if (!fileName) {
-                globalStore.set(model.errorAtom, "Missing file name in block metadata");
+                globalStore.set(
+                    model.errorAtom,
+                    t("aiDiff.missingFileName", undefined, "Missing file name in block metadata")
+                );
                 globalStore.set(model.loadingAtom, false);
                 return;
             }
 
             try {
-                const result = await model.env.rpc.WaveAIGetToolDiffCommand(TabRpcClient, {
+                const result = await RpcApi.WaveAIGetToolDiffCommand(TabRpcClient, {
                     chatid: chatId,
                     toolcallid: toolCallId,
                 });
 
                 if (!result) {
-                    globalStore.set(model.errorAtom, "No diff data returned from server");
+                    globalStore.set(
+                        model.errorAtom,
+                        t("aiDiff.noDiffData", undefined, "No diff data returned from server")
+                    );
                     globalStore.set(model.loadingAtom, false);
                     return;
                 }
@@ -107,7 +108,10 @@ function AiFileDiffView({ blockId, model }: ViewComponentProps<AiFileDiffViewMod
                 globalStore.set(model.loadingAtom, false);
             } catch (e) {
                 console.error("Error loading diff data:", e);
-                globalStore.set(model.errorAtom, `Error loading diff data: ${e.message}`);
+                globalStore.set(
+                    model.errorAtom,
+                    t("aiDiff.loadError", { error: e.message }, "Error loading diff data: {{error}}")
+                );
                 globalStore.set(model.loadingAtom, false);
             }
         }
@@ -118,7 +122,7 @@ function AiFileDiffView({ blockId, model }: ViewComponentProps<AiFileDiffViewMod
     if (loading) {
         return (
             <div className="flex items-center justify-center w-full h-full">
-                <div className="text-secondary">Loading diff...</div>
+                <div className="text-secondary">{t("aiDiff.loading", undefined, "Loading diff...")}</div>
             </div>
         );
     }
@@ -134,7 +138,7 @@ function AiFileDiffView({ blockId, model }: ViewComponentProps<AiFileDiffViewMod
     if (!diffData) {
         return (
             <div className="flex items-center justify-center w-full h-full">
-                <div className="text-secondary">No diff data available</div>
+                <div className="text-secondary">{t("aiDiff.noDataAvailable", undefined, "No diff data available")}</div>
             </div>
         );
     }

@@ -1,12 +1,15 @@
-// Copyright 2026, Command Line Inc.
+// Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { BlockNodeModel } from "@/app/block/blocktypes";
 import { getApi, globalStore, WOS } from "@/app/store/global";
-import { waveEventSubscribeSingle } from "@/app/store/wps";
+import type { TabModel } from "@/app/store/tab-model";
+import { waveEventSubscribe } from "@/app/store/wps";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { WebView, WebViewModel } from "@/app/view/webview/webview";
 import * as services from "@/store/services";
+import { t } from "@/util/i18n";
 import * as jotai from "jotai";
 import { memo, useEffect } from "react";
 
@@ -19,8 +22,8 @@ class TsunamiViewModel extends WebViewModel {
     viewIcon: jotai.Atom<IconButtonDecl>;
     viewName: jotai.Atom<string>;
 
-    constructor(initOpts: ViewModelInitType) {
-        super(initOpts);
+    constructor(blockId: string, nodeModel: BlockNodeModel, tabModel: TabModel) {
+        super(blockId, nodeModel, tabModel);
         this.viewType = "tsunami";
         this.isRestarting = jotai.atom(false);
 
@@ -28,18 +31,19 @@ class TsunamiViewModel extends WebViewModel {
         this.hideNav = jotai.atom(true);
 
         // Set custom partition for tsunami WebView isolation
-        this.partitionOverride = jotai.atom(`tsunami:${this.blockId}`);
+        this.partitionOverride = jotai.atom(`tsunami:${blockId}`);
 
         this.shellProcFullStatus = jotai.atom(null) as jotai.PrimitiveAtom<BlockControllerRuntimeStatus>;
-        const initialShellProcStatus = services.BlockService.GetControllerStatus(this.blockId);
+        const initialShellProcStatus = services.BlockService.GetControllerStatus(blockId);
         initialShellProcStatus.then((rts) => {
             this.updateShellProcStatus(rts);
         });
-        this.shellProcStatusUnsubFn = waveEventSubscribeSingle({
+        this.shellProcStatusUnsubFn = waveEventSubscribe({
             eventType: "controllerstatus",
-            scope: WOS.makeORef("block", this.blockId),
+            scope: WOS.makeORef("block", blockId),
             handler: (event) => {
-                this.updateShellProcStatus(event.data);
+                let bcRTS: BlockControllerRuntimeStatus = event.data;
+                this.updateShellProcStatus(bcRTS);
             },
         });
 
@@ -59,18 +63,19 @@ class TsunamiViewModel extends WebViewModel {
             return meta?.title || "WaveApp";
         });
         const initialRTInfo = RpcApi.GetRTInfoCommand(TabRpcClient, {
-            oref: WOS.makeORef("block", this.blockId),
+            oref: WOS.makeORef("block", blockId),
         });
         initialRTInfo.then((rtInfo) => {
             if (rtInfo && rtInfo["tsunami:appmeta"]) {
                 globalStore.set(this.appMeta, rtInfo["tsunami:appmeta"]);
             }
         });
-        this.appMetaUnsubFn = waveEventSubscribeSingle({
+        this.appMetaUnsubFn = waveEventSubscribe({
             eventType: "tsunami:updatemeta",
-            scope: WOS.makeORef("block", this.blockId),
+            scope: WOS.makeORef("block", blockId),
             handler: (event) => {
-                globalStore.set(this.appMeta, event.data);
+                const meta: AppMeta = event.data;
+                globalStore.set(this.appMeta, meta);
             },
         });
     }
@@ -199,15 +204,15 @@ class TsunamiViewModel extends WebViewModel {
         // Add tsunami-specific menu items at the beginning
         const tsunamiItems: ContextMenuItem[] = [
             {
-                label: "Stop WaveApp",
+                label: t("tsunami.stopWaveApp", undefined, "Stop WaveApp"),
                 click: () => this.destroyController(),
             },
             {
-                label: "Restart WaveApp",
+                label: t("tsunami.restartWaveApp", undefined, "Restart WaveApp"),
                 click: () => this.restartController(),
             },
             {
-                label: "Restart WaveApp and Force Rebuild",
+                label: t("tsunami.restartAndRebuild", undefined, "Restart WaveApp and Force Rebuild"),
                 click: () => this.restartAndForceRebuild(),
             },
             {
@@ -218,7 +223,7 @@ class TsunamiViewModel extends WebViewModel {
         if (showRemixOption) {
             tsunamiItems.push(
                 {
-                    label: "Remix WaveApp in Builder",
+                    label: t("tsunami.remixInBuilder", undefined, "Remix WaveApp in Builder"),
                     click: () => this.remixInBuilder(),
                 },
                 {
@@ -259,7 +264,7 @@ const TsunamiView = memo((props: ViewComponentProps<TsunamiViewModel>) => {
     if (errors.length > 0) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-                <h1 className="text-4xl font-bold text-main-text-color">Tsunami</h1>
+                <h1 className="text-4xl font-bold text-main-text-color">{t("tsunami.title", undefined, "Tsunami")}</h1>
                 <div className="flex flex-col gap-2">
                     {errors.map((error, index) => (
                         <div key={index} className="text-sm" style={{ color: "var(--color-error)" }}>
@@ -291,17 +296,19 @@ const TsunamiView = memo((props: ViewComponentProps<TsunamiViewModel>) => {
 
     return (
         <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-            <h1 className="text-4xl font-bold text-main-text-color">Tsunami</h1>
+            <h1 className="text-4xl font-bold text-main-text-color">{t("tsunami.title", undefined, "Tsunami")}</h1>
             {(appPath || appId) && <div className="text-sm text-main-text-color opacity-70">{appPath || appId}</div>}
             {isNotRunning && !isRestarting && (
                 <button
                     onClick={() => model.forceRestartController()}
                     className="px-4 py-2 bg-accent-color text-primary-text-color rounded hover:bg-accent-color/80 transition-colors cursor-pointer"
                 >
-                    Start
+                    {t("common.start", undefined, "Start")}
                 </button>
             )}
-            {isRestarting && <div className="text-sm text-success-color">Starting...</div>}
+            {isRestarting && (
+                <div className="text-sm text-success-color">{t("tsunami.starting", undefined, "Starting...")}</div>
+            )}
         </div>
     );
 });

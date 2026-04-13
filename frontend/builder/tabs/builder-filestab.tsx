@@ -9,6 +9,7 @@ import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { arrayToBase64 } from "@/util/util";
 import { atoms } from "@/store/global";
+import { t } from "@/util/i18n";
 import { useAtomValue } from "jotai";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
@@ -32,11 +33,13 @@ const RenameFileModal = memo(
         const handleRename = async () => {
             const trimmedName = newName.trim();
             if (!trimmedName) {
-                setError("File name cannot be empty");
+                setError(t("builder.files.rename.fileNameCannotBeEmpty", undefined, "File name cannot be empty"));
                 return;
             }
             if (trimmedName.includes("/") || trimmedName.includes("\\")) {
-                setError("File name cannot contain / or \\");
+                setError(
+                    t("builder.files.rename.fileNameCannotContainSlash", undefined, "File name cannot contain / or \\")
+                );
                 return;
             }
             if (trimmedName === displayName) {
@@ -71,15 +74,15 @@ const RenameFileModal = memo(
                 onOk={handleRename}
                 onCancel={handleClose}
                 onClose={handleClose}
-                okLabel="Rename"
-                cancelLabel="Cancel"
+                okLabel={t("builder.files.rename.rename", undefined, "Rename")}
+                cancelLabel={t("common.cancel", undefined, "Cancel")}
                 okDisabled={isRenaming || !newName.trim()}
             >
                 <div className="flex flex-col gap-4 mb-4">
-                    <h2 className="text-xl font-semibold">Rename File</h2>
+                    <h2 className="text-xl font-semibold">{t("builder.files.rename.renameFile", undefined, "Rename File")}</h2>
                     <div className="flex flex-col gap-2">
                         <div className="text-sm text-secondary mb-1">
-                            Current name: <span className="font-medium text-primary">{displayName}</span>
+                            {t("builder.files.rename.currentName", { name: displayName }, "Current name: {{name}}")}
                         </div>
                         <input
                             type="text"
@@ -156,16 +159,22 @@ const DeleteFileModal = memo(
                 onOk={handleDelete}
                 onCancel={handleClose}
                 onClose={handleClose}
-                okLabel="Delete"
-                cancelLabel="Cancel"
+                okLabel={t("builder.files.delete.delete", undefined, "Delete")}
+                cancelLabel={t("common.cancel", undefined, "Cancel")}
                 okDisabled={isDeleting}
             >
                 <div className="flex flex-col gap-4 mb-4">
-                    <h2 className="text-xl font-semibold">Delete File</h2>
+                    <h2 className="text-xl font-semibold">{t("builder.files.delete.deleteFile", undefined, "Delete File")}</h2>
                     <p>
-                        Are you sure you want to delete <strong>{fileName.replace("static/", "")}</strong>?
+                        {t(
+                            "builder.files.delete.confirmDelete",
+                            { fileName: fileName.replace("static/", "") },
+                            "Are you sure you want to delete {{fileName}}?"
+                        )}
                     </p>
-                    <p className="text-sm text-secondary">This action cannot be undone.</p>
+                    <p className="text-sm text-secondary">
+                        {t("builder.files.delete.cannotUndo", undefined, "This action cannot be undone.")}
+                    </p>
                     {error && <div className="text-sm text-error">{error}</div>}
                 </div>
             </Modal>
@@ -232,7 +241,13 @@ const BuilderFilesTab = memo(() => {
 
         const file = fileList[0];
         if (file.size > MaxFileSize) {
-            setError(`File size exceeds maximum allowed size of ${formatFileSize(MaxFileSize)}`);
+            setError(
+                t(
+                    "builder.files.maxFileSizeError",
+                    { maxSize: formatFileSize(MaxFileSize) },
+                    "File size exceeds maximum allowed size of {{maxSize}}"
+                )
+            );
             return;
         }
 
@@ -284,7 +299,7 @@ const BuilderFilesTab = memo(() => {
     const handleContextMenu = (e: React.MouseEvent, fileName: string) => {
         const menu: ContextMenuItem[] = [
             {
-                label: "Rename File",
+                label: t("builder.files.rename.renameFile", undefined, "Rename File"),
                 click: () => {
                     modalsModel.pushModal("RenameFileModal", { appId: builderAppId, fileName, onSuccess: loadFiles });
                 },
@@ -293,14 +308,14 @@ const BuilderFilesTab = memo(() => {
                 type: "separator",
             },
             {
-                label: "Delete File",
+                label: t("builder.files.delete.deleteFile", undefined, "Delete File"),
                 click: () => {
                     modalsModel.pushModal("DeleteFileModal", { appId: builderAppId, fileName, onSuccess: loadFiles });
                 },
             },
         ];
 
-        ContextMenuModel.getInstance().showContextMenu(menu, e);
+        ContextMenuModel.showContextMenu(menu, e);
     };
 
     return (
@@ -313,13 +328,13 @@ const BuilderFilesTab = memo(() => {
             onDragLeave={handleDragLeave}
         >
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Static Files</h2>
+                <h2 className="text-lg font-semibold">{t("builder.files.staticFiles", undefined, "Static Files")}</h2>
                 <div className="flex gap-2">
                     <button
                         className="px-3 py-1 text-sm font-medium rounded bg-panel border border-border hover:bg-hover transition-colors cursor-pointer"
                         onClick={handleRefresh}
                         disabled={loading}
-                        title="Refresh file list"
+                        title={t("builder.files.refreshFileList", undefined, "Refresh file list")}
                     >
                         <i className="fa fa-refresh" />
                     </button>
@@ -329,7 +344,7 @@ const BuilderFilesTab = memo(() => {
                         disabled={loading}
                     >
                         <i className="fa fa-plus mr-2" />
-                        Add File
+                        {t("builder.files.addFile", undefined, "Add File")}
                     </button>
                 </div>
                 <input ref={fileInputRef} type="file" onChange={handleFileInputChange} className="hidden" />
@@ -343,16 +358,26 @@ const BuilderFilesTab = memo(() => {
             )}
 
             <div className="mb-3 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-sm text-secondary">
-                Drag and drop files here or click "Add File". Maximum file size: {formatFileSize(MaxFileSize)}
+                {t(
+                    "builder.files.dragAndDropHint",
+                    { maxSize: formatFileSize(MaxFileSize) },
+                    'Drag and drop files here or click "Add File". Maximum file size: {{maxSize}}'
+                )}
             </div>
 
             <div className="flex-1 overflow-auto">
                 {loading && files.length === 0 ? (
-                    <div className="text-center text-secondary py-8">Loading files...</div>
+                    <div className="text-center text-secondary py-8">{t("builder.files.loadingFiles", undefined, "Loading files...")}</div>
                 ) : files.length === 0 ? (
                     <div className="text-center text-secondary py-12">
                         <i className="fa fa-file text-4xl mb-3 opacity-50" />
-                        <p>No files yet. Drag and drop files here or click "Add File" to get started.</p>
+                        <p>
+                            {t(
+                                "builder.files.noFilesYet",
+                                undefined,
+                                'No files yet. Drag and drop files here or click "Add File" to get started.'
+                            )}
+                        </p>
                     </div>
                 ) : (
                     <div className="space-y-1">
@@ -370,7 +395,11 @@ const BuilderFilesTab = memo(() => {
                                         {file.isReadOnly && (
                                             <span className="ml-2 text-warning">
                                                 <i className="fa fa-lock mr-1" />
-                                                Generated by framework (read-only)
+                                                {t(
+                                                    "builder.files.readOnlyGenerated",
+                                                    undefined,
+                                                    "Generated by framework (read-only)"
+                                                )}
                                             </span>
                                         )}
                                     </div>
@@ -380,7 +409,7 @@ const BuilderFilesTab = memo(() => {
                                     <button
                                         className="px-2 py-1 hover:bg-hover rounded transition-colors cursor-pointer"
                                         onClick={(e) => handleContextMenu(e, file.name)}
-                                        title="File options"
+                                        title={t("builder.files.fileOptions", undefined, "File options")}
                                     >
                                         <i className="fa fa-ellipsis-vertical" />
                                     </button>

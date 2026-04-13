@@ -6,6 +6,7 @@ import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { atoms } from "@/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
+import { t } from "@/util/i18n";
 import { useAtomValue } from "jotai";
 import { memo, useState, useEffect } from "react";
 import { Check, AlertTriangle } from "lucide-react";
@@ -30,7 +31,15 @@ const SecretRow = memo(({ secretName, secretMeta, currentBinding, availableSecre
 
     return (
         <div className="flex items-center gap-4 py-2 border-b border-border">
-            <Tooltip content={!isMapped ? "Secret is Not Mapped" : isValid ? "Secret Has a Valid Mapping" : "Secret Binding is Invalid"}>
+            <Tooltip
+                content={
+                    !isMapped
+                        ? t("builder.secrets.secretNotMapped", undefined, "Secret is Not Mapped")
+                        : isValid
+                          ? t("builder.secrets.secretHasValidMapping", undefined, "Secret Has a Valid Mapping")
+                          : t("builder.secrets.secretBindingInvalid", undefined, "Secret Binding is Invalid")
+                }
+            >
                 <div className="flex items-center">
                     {!isMapped && <AlertTriangle className="w-5 h-5 text-yellow-500" />}
                     {isInvalid && <AlertTriangle className="w-5 h-5 text-red-500" />}
@@ -40,10 +49,14 @@ const SecretRow = memo(({ secretName, secretMeta, currentBinding, availableSecre
             <div className="flex-1 flex items-center gap-2">
                 <span className="font-medium text-primary">{secretName}</span>
                 {!secretMeta.optional && (
-                    <span className="px-2 py-0.5 text-xs bg-red-500/20 text-red-500 rounded">Required</span>
+                    <span className="px-2 py-0.5 text-xs bg-red-500/20 text-red-500 rounded">
+                        {t("builder.secrets.required", undefined, "Required")}
+                    </span>
                 )}
                 {secretMeta.optional && (
-                    <span className="px-2 py-0.5 text-xs bg-blue-500/20 text-blue-500 rounded">Optional</span>
+                    <span className="px-2 py-0.5 text-xs bg-blue-500/20 text-blue-500 rounded">
+                        {t("builder.secrets.optional", undefined, "Optional")}
+                    </span>
                 )}
                 {secretMeta.desc && <span className="text-sm text-secondary">— {secretMeta.desc}</span>}
             </div>
@@ -53,7 +66,7 @@ const SecretRow = memo(({ secretName, secretMeta, currentBinding, availableSecre
                         onClick={() => onMapDefault(secretName)}
                         className="px-3 py-1 text-sm font-medium rounded bg-accent/80 text-primary hover:bg-accent transition-colors cursor-pointer whitespace-nowrap"
                     >
-                        Map Default
+                        {t("builder.secrets.mapDefault", undefined, "Map Default")}
                     </button>
                 )}
                 {!isMapped && !hasMatchingSecret && (
@@ -61,7 +74,7 @@ const SecretRow = memo(({ secretName, secretMeta, currentBinding, availableSecre
                         onClick={() => onSetAndMapDefault(secretName)}
                         className="px-3 py-1 text-sm font-medium rounded bg-accent/80 text-primary hover:bg-accent transition-colors cursor-pointer whitespace-nowrap"
                     >
-                        Set and Map Default
+                        {t("builder.secrets.setAndMapDefault", undefined, "Set and Map Default")}
                     </button>
                 )}
             </div>
@@ -114,9 +127,9 @@ const SetSecretDialog = memo(({ secretName, onSetAndMap }: SetSecretDialogProps)
 
     if (error) {
         return (
-            <Modal className="p-4 min-w-[500px]" onOk={handleClose} onClose={handleClose} okLabel="OK">
+            <Modal className="p-4 min-w-[500px]" onOk={handleClose} onClose={handleClose} okLabel={t("common.ok", undefined, "OK")}>
                 <div className="flex flex-col gap-4 mb-4">
-                    <h2 className="text-xl font-semibold">Error Setting Secret</h2>
+                    <h2 className="text-xl font-semibold">{t("builder.secrets.errorSettingSecret", undefined, "Error Setting Secret")}</h2>
                     <div className="text-sm text-error">{error}</div>
                 </div>
             </Modal>
@@ -129,27 +142,27 @@ const SetSecretDialog = memo(({ secretName, onSetAndMap }: SetSecretDialogProps)
             onOk={handleSubmit}
             onCancel={handleClose}
             onClose={handleClose}
-            okLabel="Set and Map"
-            cancelLabel="Cancel"
+            okLabel={t("builder.secrets.setAndMap", undefined, "Set and Map")}
+            cancelLabel={t("common.cancel", undefined, "Cancel")}
             okDisabled={!secretValue.trim() || isSubmitting}
         >
             <div className="flex flex-col gap-4 mb-4">
-                <h2 className="text-xl font-semibold">Set and Map Secret</h2>
+                <h2 className="text-xl font-semibold">{t("builder.secrets.setAndMapSecret", undefined, "Set and Map Secret")}</h2>
                 <div className="flex flex-col gap-2">
                     <div className="text-sm font-medium mb-1">
-                        Secret Name: <span className="text-accent">{secretName}</span>
+                        {t("builder.secrets.secretName", { name: secretName }, "Secret Name: {{name}}")}
                     </div>
                     <textarea
                         value={secretValue}
                         onChange={(e) => setSecretValue(e.target.value)}
-                        placeholder="Paste secret value here..."
+                        placeholder={t("builder.secrets.pasteSecretValue", undefined, "Paste secret value here...")}
                         className="w-full px-3 py-2 bg-panel border border-border rounded focus:outline-none focus:border-accent resize-none"
                         rows={4}
                         autoFocus
                         disabled={isSubmitting}
                     />
                     <div className="text-xs text-secondary">
-                        Secrets are stored securely in Wave's secret store
+                        {t("builder.secrets.secureStorageHint", undefined, "Secrets are stored securely in Wave's secret store")}
                     </div>
                 </div>
             </div>
@@ -186,7 +199,11 @@ const BuilderSecretTab = memo(() => {
         return (
             <div className="w-full h-full flex items-center justify-center">
                 <div className="text-secondary text-center">
-                    App manifest not available. Secrets will be shown once the app builds successfully.
+                    {t(
+                        "builder.secrets.manifestNotAvailable",
+                        undefined,
+                        "App manifest not available. Secrets will be shown once the app builds successfully."
+                    )}
                 </div>
             </div>
         );
@@ -212,7 +229,15 @@ const BuilderSecretTab = memo(() => {
             model.restartBuilder();
         } catch (err) {
             console.error("Failed to save secret bindings:", err);
-            globalStore.set(model.errorAtom, `Failed to save secret bindings: ${err.message || "Unknown error"}`);
+            const errMsg = err instanceof Error ? err.message : String(err);
+            globalStore.set(
+                model.errorAtom,
+                t(
+                    "builder.secrets.saveBindingsFailed",
+                    { error: errMsg || t("builder.errors.unknownError", undefined, "Unknown error") },
+                    "Failed to save secret bindings: {{error}}"
+                )
+            );
         }
     };
 
@@ -237,7 +262,15 @@ const BuilderSecretTab = memo(() => {
             model.restartBuilder();
         } catch (err) {
             console.error("Failed to save secret bindings:", err);
-            globalStore.set(model.errorAtom, `Failed to save secret bindings: ${err.message || "Unknown error"}`);
+            const errMsg = err instanceof Error ? err.message : String(err);
+            globalStore.set(
+                model.errorAtom,
+                t(
+                    "builder.secrets.saveBindingsFailed",
+                    { error: errMsg || t("builder.errors.unknownError", undefined, "Unknown error") },
+                    "Failed to save secret bindings: {{error}}"
+                )
+            );
         }
     };
 
@@ -247,16 +280,19 @@ const BuilderSecretTab = memo(() => {
 
     return (
         <div className="w-full h-full flex flex-col p-4">
-            <h2 className="text-lg font-semibold mb-2">Secret Bindings</h2>
+            <h2 className="text-lg font-semibold mb-2">{t("builder.secrets.secretBindings", undefined, "Secret Bindings")}</h2>
 
             <div className="mb-4 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-sm text-secondary">
-                Map app secrets to Wave secret store names. Required secrets must be bound before the app can run
-                successfully. Changes are saved automatically.
+                {t(
+                    "builder.secrets.mappingHint",
+                    undefined,
+                    "Map app secrets to Wave secret store names. Required secrets must be bound before the app can run successfully. Changes are saved automatically."
+                )}
             </div>
 
             {!allRequiredBound && (
                 <div className="mb-4 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-sm text-yellow-600">
-                    Some required secrets are not bound yet.
+                    {t("builder.secrets.requiredNotBound", undefined, "Some required secrets are not bound yet.")}
                 </div>
             )}
 
@@ -265,7 +301,7 @@ const BuilderSecretTab = memo(() => {
             <div className="flex-1 overflow-auto">
                 {sortedSecretEntries.length === 0 ? (
                     <div className="text-secondary text-center py-8">
-                        No secrets defined in this app manifest.
+                        {t("builder.secrets.noSecretsDefined", undefined, "No secrets defined in this app manifest.")}
                     </div>
                 ) : (
                     <div className="space-y-1">

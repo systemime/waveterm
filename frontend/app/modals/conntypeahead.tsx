@@ -16,6 +16,7 @@ import { globalRefocusWithTimeout } from "@/app/store/keymodel";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { NodeModel } from "@/layout/index";
+import { t } from "@/util/i18n";
 import * as keyutil from "@/util/keyutil";
 import * as util from "@/util/util";
 import * as jotai from "jotai";
@@ -126,7 +127,7 @@ function getReconnectItem(
         status: "connected",
         icon: "arrow-right-arrow-left",
         iconColor: "var(--grey-text-color)",
-        label: `Reconnect to ${connStatus.connection}`,
+        label: t("connectionModal.reconnectTo", { connection: connStatus.connection }),
         value: "",
         onSelect: async (_: string) => {
             globalStore.set(changeConnModalAtom, false);
@@ -162,7 +163,7 @@ function getLocalSuggestions(
             icon: "laptop",
             iconColor: "var(--grey-text-color)",
             value: "local:gitbash",
-            label: "Git Bash",
+            label: t("connectionModal.gitBash", undefined, "Git Bash"),
             current: connection === "local:gitbash",
         });
     }
@@ -173,7 +174,7 @@ function getLocalSuggestions(
         return null;
     }
     const localSuggestions: SuggestionConnectionScope = {
-        headerText: "Local",
+        headerText: t("connectionModal.local"),
         items: sortedSuggestionItems,
     };
     return localSuggestions;
@@ -194,7 +195,7 @@ function getRemoteSuggestions(
         return null;
     }
     const remoteSuggestions: SuggestionConnectionScope = {
-        headerText: "Remote",
+        headerText: t("connectionModal.remote"),
         items: sortedSuggestionItems,
     };
     return remoteSuggestions;
@@ -216,7 +217,7 @@ function getDisconnectItem(
         status: "connected",
         icon: "xmark",
         iconColor: "var(--grey-text-color)",
-        label: `Disconnect ${connStatus.connection}`,
+        label: t("connectionModal.disconnect", { connection: connStatus.connection }),
         value: "",
         onSelect: async (_: string) => {
             globalStore.set(changeConnModalAtom, false);
@@ -238,8 +239,8 @@ function getConnectionsEditItem(
         status: "disconnected",
         icon: "gear",
         iconColor: "var(--grey-text-color)",
-        value: "Edit Connections",
-        label: "Edit Connections",
+        value: t("connectionModal.editConnections"),
+        label: t("connectionModal.editConnections"),
         onSelect: () => {
             util.fireAndForget(async () => {
                 globalStore.set(changeConnModalAtom, false);
@@ -274,7 +275,7 @@ function getNewConnectionSuggestionItem(
         status: "connected",
         icon: "plus",
         iconColor: "var(--grey-text-color)",
-        label: `${connSelected} (New Connection)`,
+        label: t("connectionModal.newConnection", { connection: connSelected }),
         value: "",
         onSelect: (_: string) => {
             changeConnection(connSelected);
@@ -486,7 +487,7 @@ const ChangeConnectionBlockModal = React.memo(
                 onKeyDown={(e) => keyutil.keydownWrapper(handleTypeAheadKeyDown)(e)}
                 onChange={(current: string) => setConnSelected(current)}
                 value={connSelected}
-                label="Connect to (username@host)..."
+                label={t("connectionModal.connectToPlaceholder")}
                 onClickBackdrop={() => globalStore.set(changeConnModalAtom, false)}
             />
         );
