@@ -44,7 +44,7 @@ jobs:
         #   - https://gh.io/supported-runners-and-hardware-resources
         #   - https://gh.io/using-larger-runners
         # Consider using larger runners for possible analysis time improvements.
-        if: github.event.pull_request.draft == false
+        if: github.repository == 'wavetermdev/waveterm' && github.event.pull_request.draft == false
         runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
         timeout-minutes: ${{ (matrix.language == 'swift' && 120) || 360 }}
         permissions:
@@ -76,7 +76,7 @@ jobs:
                   node-version: ${{env.NODE_VERSION}}
                   cache: npm
                   cache-dependency-path: package-lock.json
-            - uses: nick-fields/retry@v4
+            - uses: nick-fields/retry@v3
               name: npm ci
               with:
                   command: npm ci --no-audit --no-fund

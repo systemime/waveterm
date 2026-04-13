@@ -39,7 +39,7 @@ jobs:
     build_and_upload:
         name: Build for TestDriver.ai
         runs-on: windows-latest
-        if: github.event.pull_request.draft == false
+        if: github.repository == 'wavetermdev/waveterm' && github.event.pull_request.draft == false
         steps:
             - uses: actions/checkout@v6
 
@@ -52,7 +52,7 @@ jobs:
                   node-version: ${{env.NODE_VERSION}}
                   cache: npm
                   cache-dependency-path: package-lock.json
-            - uses: nick-fields/retry@v4
+            - uses: nick-fields/retry@v3
               name: npm ci
               with:
                   command: npm ci --no-audit --no-fund
