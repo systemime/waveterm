@@ -296,6 +296,10 @@ function useBlockMetaKeyAtom<T extends keyof MetaType>(blockId: string, key: T):
     return useAtomValue(getBlockMetaKeyAtom(blockId, key));
 }
 
+function getTabMetaKeyAtom<T extends keyof MetaType>(tabId: string, key: T): Atom<MetaType[T]> {
+    return getOrefMetaKeyAtom(WOS.makeORef("tab", tabId), key);
+}
+
 function getOrefMetaKeyAtom<T extends keyof MetaType>(oref: string, key: T): Atom<MetaType[T]> {
     const orefCache = getSingleOrefAtomCache(oref);
     const metaAtomName = "#meta-" + key;

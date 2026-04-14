@@ -224,6 +224,14 @@ function getWaveObjectLoadingAtom(oref: string): Atom<boolean> {
     });
 }
 
+function isWaveObjectNullAtom(oref: string): Atom<boolean> {
+    const wov = getWaveObjectValue(oref);
+    return atom((get) => {
+        const dataValue = get(wov.dataAtom);
+        return !dataValue.loading && dataValue.value == null;
+    });
+}
+
 function useWaveObjectValue<T extends WaveObj>(oref: string): [T, boolean] {
     const wov = getWaveObjectValue<T>(oref);
     useEffect(() => {
@@ -313,6 +321,7 @@ export {
     getObjectValue,
     getWaveObjectAtom,
     getWaveObjectLoadingAtom,
+    isWaveObjectNullAtom,
     loadAndPinWaveObject,
     makeORef,
     reloadWaveObject,
