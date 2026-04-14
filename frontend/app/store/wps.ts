@@ -83,6 +83,10 @@ function waveEventSubscribe(...subscriptions: WaveEventSubscription[]): () => vo
     return () => waveEventUnsubscribe(...unsubs);
 }
 
+function waveEventSubscribeSingle(subscription: WaveEventSubscription): () => void {
+    return waveEventSubscribe(subscription);
+}
+
 function waveEventUnsubscribe(...unsubscribes: WaveEventUnsubscribe[]) {
     const eventTypeSet = new Set<string>();
     for (const unsubscribe of unsubscribes) {
@@ -150,6 +154,7 @@ export {
     handleWaveEvent,
     setWpsRpcClient,
     waveEventSubscribe,
+    waveEventSubscribeSingle,
     waveEventUnsubscribe,
     wpsReconnectHandler,
 };
