@@ -20,9 +20,7 @@ type lineBuf struct {
 	inLongLine bool
 }
 
-// needs to be large enough to read the largest RPC packet
-// there are some legacy file transfer packets that can send up to 32m (base64 encoded)
-const maxLineLength = 64 * 1024 * 1024
+const maxLineLength = 128 * 1024
 
 func ReadLineWithTimeout(ch chan LineOutput, timeout time.Duration) (string, error) {
 	select {

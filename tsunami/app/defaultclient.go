@@ -64,13 +64,6 @@ func SendAsyncInitiation() error {
 	return engine.GetDefaultClient().SendAsyncInitiation()
 }
 
-func TermWrite(ref *vdom.VDomRef, data string) error {
-	if ref == nil || !ref.HasCurrent.Load() {
-		return nil
-	}
-	return engine.GetDefaultClient().SendTermWrite(ref.RefId, data)
-}
-
 func ConfigAtom[T any](name string, defaultValue T, meta *AtomMeta) Atom[T] {
 	fullName := "$config." + name
 	client := engine.GetDefaultClient()
@@ -162,7 +155,7 @@ func DeepCopy[T any](v T) T {
 // If the ref is nil or not current, the operation is ignored.
 // This function must be called within a component context.
 func QueueRefOp(ref *vdom.VDomRef, op vdom.VDomRefOperation) {
-	if ref == nil || !ref.HasCurrent.Load() {
+	if ref == nil || !ref.HasCurrent {
 		return
 	}
 	if op.RefId == "" {

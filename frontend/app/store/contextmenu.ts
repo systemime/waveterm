@@ -3,41 +3,18 @@
 
 import { atoms, getApi, globalStore } from "./global";
 
-type ShowContextMenuOpts = {
-    onSelect?: (item: ContextMenuItem) => void;
-    onCancel?: () => void;
-    onClose?: (item: ContextMenuItem | null) => void;
-};
+class ContextMenuModelType {
+    handlers: Map<string, () => void> = new Map(); // id -> handler
 
-class ContextMenuModel {
-    private static instance: ContextMenuModel;
-    handlers: Map<string, ContextMenuItem> = new Map(); // id -> item
-    activeOpts: ShowContextMenuOpts | null = null;
-
-    private constructor() {
+    constructor() {
         getApi().onContextMenuClick(this.handleContextMenuClick.bind(this));
     }
 
-    static getInstance(): ContextMenuModel {
-        if (ContextMenuModel.instance == null) {
-            ContextMenuModel.instance = new ContextMenuModel();
+    handleContextMenuClick(id: string): void {
+        const handler = this.handlers.get(id);
+        if (handler) {
+            handler();
         }
-        return ContextMenuModel.instance;
-    }
-
-    handleContextMenuClick(id: string | null): void {
-        const opts = this.activeOpts;
-        this.activeOpts = null;
-        const item = id != null ? this.handlers.get(id) : null;
-        this.handlers.clear();
-        if (item == null) {
-            opts?.onCancel?.();
-            opts?.onClose?.(null);
-            return;
-        }
-        item.click?.();
-        opts?.onSelect?.(item);
-        opts?.onClose?.(item);
     }
 
     _convertAndRegisterMenu(menu: ContextMenuItem[]): ElectronContextMenuItem[] {
@@ -58,7 +35,7 @@ class ContextMenuModel {
                 electronItem.enabled = false;
             }
             if (item.click) {
-                this.handlers.set(electronItem.id, item);
+                this.handlers.set(electronItem.id, item.click);
             }
             if (item.submenu) {
                 electronItem.submenu = this._convertAndRegisterMenu(item.submenu);
@@ -68,17 +45,16 @@ class ContextMenuModel {
         return electronMenuItems;
     }
 
-    showContextMenu(menu: ContextMenuItem[], ev: React.MouseEvent<any>, opts?: ShowContextMenuOpts): void {
+    showContextMenu(menu: ContextMenuItem[], ev: React.MouseEvent<any>): void {
         ev.stopPropagation();
         this.handlers.clear();
-        this.activeOpts = opts;
         const electronMenuItems = this._convertAndRegisterMenu(menu);
         
-        const workspaceId = globalStore.get(atoms.workspaceId);
+        const workspace = globalStore.get(atoms.workspace);
         let oid: string;
         
-        if (workspaceId != null) {
-            oid = workspaceId;
+        if (workspace != null) {
+            oid = workspace.oid;
         } else {
             oid = globalStore.get(atoms.builderId);
         }
@@ -87,4 +63,6 @@ class ContextMenuModel {
     }
 }
 
-export { ContextMenuModel };
+const ContextMenuModel = new ContextMenuModelType();
+
+export { ContextMenuModel, ContextMenuModelType };

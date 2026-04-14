@@ -1,9 +1,12 @@
-// Copyright 2026, Command Line Inc.
+// Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { globalStore } from "@/app/store/jotaiStore";
+import { globalStore } from "@/app/store/global";
+import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
+import { t } from "@/util/i18n";
 import { fireAndForget, isBlank } from "@/util/util";
+import { Column } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import React from "react";
 import { type PreviewModel } from "./preview-model";
@@ -38,22 +41,23 @@ export function getBestUnit(bytes: number, si = false, sigfig = 3): string {
     return `${parseFloat(value.toPrecision(sigfig))}${displaySuffixes[unit] ?? unit}`;
 }
 
-function padDay(day: number) {
-    return String(day).padStart(2, " ");
-}
+export function getLastModifiedTime(unixMillis: number, column: Column<FileInfo, number>): string {
+    const fileDatetime = dayjs(new Date(unixMillis));
+    const nowDatetime = dayjs(new Date());
 
-export function getLastModifiedTime(unixMillis: number): string {
-    const file = dayjs(unixMillis);
-    const now = dayjs();
-
-    const day = padDay(file.date());
-    const time = file.format("HH:mm");
-
-    if (now.isSame(file, "year")) {
-        return `${file.format("MMM")} ${day} ${time}`;
+    let datePortion: string;
+    if (nowDatetime.isSame(fileDatetime, "date")) {
+        datePortion = t("preview.directory.today");
+    } else if (nowDatetime.subtract(1, "day").isSame(fileDatetime, "date")) {
+        datePortion = t("preview.directory.yesterday");
+    } else {
+        datePortion = dayjs(fileDatetime).format("M/D/YY");
     }
 
-    return `${file.format("YYYY-MM-DD")}`;
+    if (column.getSize() > 120) {
+        return `${datePortion}, ${dayjs(fileDatetime).format("h:mm A")}`;
+    }
+    return datePortion;
 }
 
 const iconRegex = /^[a-z0-9- ]+$/;
@@ -94,7 +98,7 @@ export function handleRename(
             if (isDir) {
                 srcuri += "/";
             }
-            await model.env.rpc.FileMoveCommand(TabRpcClient, {
+            await RpcApi.FileMoveCommand(TabRpcClient, {
                 srcuri,
                 desturi: await model.formatRemoteUri(newPath, globalStore.get),
             });
@@ -102,7 +106,7 @@ export function handleRename(
             const errorText = `${e}`;
             console.warn(`Rename failed: ${errorText}`);
             const errorMsg: ErrorMsg = {
-                status: "Rename Failed",
+                status: t("preview.directory.renameFailed"),
                 text: `${e}`,
             };
             setErrorMsg(errorMsg);
@@ -120,7 +124,7 @@ export function handleFileDelete(
     fireAndForget(async () => {
         const formattedPath = await model.formatRemoteUri(path, globalStore.get);
         try {
-            await model.env.rpc.FileDeleteCommand(TabRpcClient, {
+            await RpcApi.FileDeleteCommand(TabRpcClient, {
                 path: formattedPath,
                 recursive,
             });
@@ -130,19 +134,19 @@ export function handleFileDelete(
             let errorMsg: ErrorMsg;
             if (errorText.includes(recursiveError) && !recursive) {
                 errorMsg = {
-                    status: "Confirm Delete Directory",
-                    text: "Deleting a directory requires the recursive flag. Proceed?",
+                    status: t("preview.directory.confirmDeleteDirectory"),
+                    text: t("preview.directory.deleteDirectoryNeedsRecursive"),
                     level: "warning",
                     buttons: [
                         {
-                            text: "Delete Recursively",
+                            text: t("preview.directory.deleteRecursively"),
                             onClick: () => handleFileDelete(model, path, true, setErrorMsg),
                         },
                     ],
                 };
             } else {
                 errorMsg = {
-                    status: "Delete Failed",
+                    status: t("preview.directory.deleteFailed"),
                     text: `${e}`,
                 };
             }
@@ -150,61 +154,4 @@ export function handleFileDelete(
         }
         model.refreshCallback();
     });
-}
-
-export function makeDirectoryDefaultMenuItems(model: PreviewModel): ContextMenuItem[] {
-    const defaultSort = globalStore.get(model.env.getSettingsKeyAtom("preview:defaultsort")) ?? "name";
-    const showHiddenFiles = globalStore.get(model.showHiddenFiles) ?? true;
-    return [
-        {
-            label: "Directory Sort Order",
-            submenu: [
-                {
-                    label: "Name",
-                    type: "checkbox",
-                    checked: defaultSort === "name",
-                    click: () =>
-                        fireAndForget(() =>
-                            model.env.rpc.SetConfigCommand(TabRpcClient, { "preview:defaultsort": "name" })
-                        ),
-                },
-                {
-                    label: "Last Modified",
-                    type: "checkbox",
-                    checked: defaultSort === "modtime",
-                    click: () =>
-                        fireAndForget(() =>
-                            model.env.rpc.SetConfigCommand(TabRpcClient, { "preview:defaultsort": "modtime" })
-                        ),
-                },
-            ],
-        },
-        {
-            label: "Show Hidden Files",
-            submenu: [
-                {
-                    label: "On",
-                    type: "checkbox",
-                    checked: showHiddenFiles,
-                    click: () => {
-                        globalStore.set(model.showHiddenFiles, true);
-                        fireAndForget(() =>
-                            model.env.rpc.SetConfigCommand(TabRpcClient, { "preview:showhiddenfiles": true })
-                        );
-                    },
-                },
-                {
-                    label: "Off",
-                    type: "checkbox",
-                    checked: !showHiddenFiles,
-                    click: () => {
-                        globalStore.set(model.showHiddenFiles, false);
-                        fireAndForget(() =>
-                            model.env.rpc.SetConfigCommand(TabRpcClient, { "preview:showhiddenfiles": false })
-                        );
-                    },
-                },
-            ],
-        },
-    ];
 }

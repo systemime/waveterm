@@ -7,13 +7,11 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/fs"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
 	"github.com/wavetermdev/waveterm/pkg/jobcontroller"
 	"github.com/wavetermdev/waveterm/pkg/remote"
 	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
@@ -165,11 +163,7 @@ func (dsc *DurableShellController) Start(ctx context.Context, blockMeta waveobj.
 
 	if jobId == "" {
 		log.Printf("block %q starting new durable shell\n", dsc.BlockId)
-		fsErr := filestore.WFS.MakeFile(ctx, dsc.BlockId, wavebase.BlockFile_Term, nil, wshrpc.FileOpts{MaxSize: DefaultTermMaxFileSize, Circular: true})
-		if fsErr != nil && fsErr != fs.ErrExist {
-			return fmt.Errorf("error creating block term file: %w", fsErr)
-		}
-		newJobId, err := dsc.startNewJob(ctx, blockMeta, dsc.ConnName, rtOpts)
+		newJobId, err := dsc.startNewJob(ctx, blockMeta, dsc.ConnName)
 		if err != nil {
 			return fmt.Errorf("failed to start new job: %w", err)
 		}
@@ -224,13 +218,10 @@ func (dsc *DurableShellController) SendInput(inputUnion *BlockInputUnion) error 
 	return jobcontroller.SendInput(context.Background(), data)
 }
 
-func (dsc *DurableShellController) startNewJob(ctx context.Context, blockMeta waveobj.MetaMapType, connName string, rtOpts *waveobj.RuntimeOpts) (string, error) {
+func (dsc *DurableShellController) startNewJob(ctx context.Context, blockMeta waveobj.MetaMapType, connName string) (string, error) {
 	termSize := waveobj.TermSize{
 		Rows: shellutil.DefaultTermRows,
 		Cols: shellutil.DefaultTermCols,
-	}
-	if rtOpts != nil && rtOpts.TermSize.Rows > 0 && rtOpts.TermSize.Cols > 0 {
-		termSize = rtOpts.TermSize
 	}
 	cmdStr := blockMeta.GetString(waveobj.MetaKey_Cmd, "")
 	cwd := blockMeta.GetString(waveobj.MetaKey_CmdCwd, "")

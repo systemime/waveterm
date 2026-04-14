@@ -150,3 +150,13 @@ func ReadStreamToFileData(ctx context.Context, readCh <-chan wshrpc.RespOrErrorU
 	}
 	return fileData, nil
 }
+
+func ReadFileStreamToWriter(ctx context.Context, readCh <-chan wshrpc.RespOrErrorUnion[wshrpc.FileData], writer io.Writer) error {
+	return ReadFileStream(ctx, readCh, func(finfo wshrpc.FileInfo) {
+	}, func(entries []*wshrpc.FileInfo) error {
+		return nil
+	}, func(data io.Reader) error {
+		_, err := io.Copy(writer, data)
+		return err
+	})
+}

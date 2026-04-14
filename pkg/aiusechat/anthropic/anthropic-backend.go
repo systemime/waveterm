@@ -10,18 +10,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
-	"sort"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/launchdarkly/eventsource"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/util/logutil"
 	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
 	"github.com/wavetermdev/waveterm/pkg/web/sse"
 )
@@ -58,11 +56,10 @@ func (m *anthropicChatMessage) GetUsage() *uctypes.AIUsage {
 	}
 
 	return &uctypes.AIUsage{
-		APIType:              uctypes.APIType_AnthropicMessages,
-		Model:                m.Usage.Model,
-		InputTokens:          m.Usage.InputTokens,
-		OutputTokens:         m.Usage.OutputTokens,
-		NativeWebSearchCount: m.Usage.NativeWebSearchCount,
+		APIType:      uctypes.APIType_AnthropicMessages,
+		Model:        m.Usage.Model,
+		InputTokens:  m.Usage.InputTokens,
+		OutputTokens: m.Usage.OutputTokens,
 	}
 }
 
@@ -98,9 +95,8 @@ type anthropicMessageContentBlock struct {
 	Name  string      `json:"name,omitempty"`
 	Input interface{} `json:"input,omitempty"`
 
-	ToolUseDisplayName      string                        `json:"toolusedisplayname,omitempty"`      // internal field (cannot marshal to API, must be stripped)
-	ToolUseShortDescription string                        `json:"tooluseshortdescription,omitempty"` // internal field (cannot marshal to API, must be stripped)
-	ToolUseData             *uctypes.UIMessageDataToolUse `json:"toolusedata,omitempty"`             // internal field (cannot marshal to API, must be stripped)
+	ToolUseDisplayName      string `json:"toolusedisplayname,omitempty"`      // internal field (cannot marshal to API, must be stripped)
+	ToolUseShortDescription string `json:"tooluseshortdescription,omitempty"` // internal field (cannot marshal to API, must be stripped)
 
 	// Tool result content
 	ToolUseID string      `json:"tool_use_id,omitempty"`
@@ -158,7 +154,6 @@ func (b *anthropicMessageContentBlock) Clean() *anthropicMessageContentBlock {
 	rtn.SourcePreviewUrl = ""
 	rtn.ToolUseDisplayName = ""
 	rtn.ToolUseShortDescription = ""
-	rtn.ToolUseData = nil
 	if rtn.Source != nil {
 		rtn.Source = rtn.Source.Clean()
 	}
@@ -182,13 +177,8 @@ type anthropicStreamRequest struct {
 	Stream     bool                           `json:"stream"`
 	System     []anthropicMessageContentBlock `json:"system,omitempty"`
 	ToolChoice any                            `json:"tool_choice,omitempty"`
-	Tools      []any                          `json:"tools,omitempty"` // *uctypes.ToolDefinition or *anthropicWebSearchTool
+	Tools      []uctypes.ToolDefinition       `json:"tools,omitempty"`
 	Thinking   *anthropicThinkingOpts         `json:"thinking,omitempty"`
-}
-
-type anthropicWebSearchTool struct {
-	Type string `json:"type"` // "web_search_20250305"
-	Name string `json:"name"` // "web_search"
 }
 
 type anthropicCacheControl struct {
@@ -238,9 +228,8 @@ type anthropicUsageType struct {
 	CacheCreationInputTokens int `json:"cache_creation_input_tokens,omitempty"`
 	CacheReadInputTokens     int `json:"cache_read_input_tokens,omitempty"`
 
-	// internal fields for Wave use (not sent to API)
-	Model                string `json:"model,omitempty"`
-	NativeWebSearchCount int    `json:"nativewebsearchcount,omitempty"`
+	// internal field for Wave use (not sent to API)
+	Model string `json:"model,omitempty"`
 
 	// for reference, but we dont keep thsese up to date or track them
 	CacheCreation *anthropicCacheCreationType `json:"cache_creation,omitempty"`  // breakdown of cached tokens by TTL
@@ -301,16 +290,14 @@ type partialJSON struct {
 }
 
 type streamingState struct {
-	blockMap        map[int]*blockState
-	toolCalls       []uctypes.WaveToolCall
-	stopFromDelta   string
-	msgID           string
-	model           string
-	stepStarted     bool
-	rtnMessage      *anthropicChatMessage
-	usage           *anthropicUsageType
-	chatOpts        uctypes.WaveChatOpts
-	webSearchCount  int
+	blockMap      map[int]*blockState
+	toolCalls     []uctypes.WaveToolCall
+	stopFromDelta string
+	msgID         string
+	model         string
+	stepStarted   bool
+	rtnMessage    *anthropicChatMessage
+	usage         *anthropicUsageType
 }
 
 func (p *partialJSON) Write(s string) {
@@ -341,20 +328,6 @@ func (p *partialJSON) FinalObject() (json.RawMessage, error) {
 	default:
 		return nil, fmt.Errorf("tool input is not an object")
 	}
-}
-
-// sanitizeHostnameInError removes the Wave cloud hostname from error messages
-func sanitizeHostnameInError(err error) error {
-	if err == nil {
-		return nil
-	}
-	errStr := err.Error()
-	parsedURL, parseErr := url.Parse(uctypes.DefaultAIEndpoint)
-	if parseErr == nil && parsedURL.Host != "" && strings.Contains(errStr, parsedURL.Host) {
-		errStr = strings.ReplaceAll(errStr, uctypes.DefaultAIEndpoint, "AI service")
-		errStr = strings.ReplaceAll(errStr, parsedURL.Host, "host")
-	}
-	return fmt.Errorf("%s", errStr)
 }
 
 // makeThinkingOpts creates thinking options based on level and max tokens
@@ -400,13 +373,13 @@ func parseAnthropicHTTPError(resp *http.Response) error {
 	// Try to parse as Anthropic error format first
 	var eresp anthropicHTTPErrorResponse
 	if err := json.Unmarshal(slurp, &eresp); err == nil && eresp.Error.Message != "" {
-		return sanitizeHostnameInError(fmt.Errorf("anthropic %s: %s", resp.Status, eresp.Error.Message))
+		return fmt.Errorf("anthropic %s: %s", resp.Status, eresp.Error.Message)
 	}
 
 	// Try to parse as proxy error format
 	var proxyErr uctypes.ProxyErrorResponse
 	if err := json.Unmarshal(slurp, &proxyErr); err == nil && !proxyErr.Success && proxyErr.Error != "" {
-		return sanitizeHostnameInError(fmt.Errorf("anthropic %s: %s", resp.Status, proxyErr.Error))
+		return fmt.Errorf("anthropic %s: %s", resp.Status, proxyErr.Error)
 	}
 
 	// Fall back to truncated raw response
@@ -414,7 +387,7 @@ func parseAnthropicHTTPError(resp *http.Response) error {
 	if msg == "" {
 		msg = "unknown error"
 	}
-	return sanitizeHostnameInError(fmt.Errorf("anthropic %s: %s", resp.Status, msg))
+	return fmt.Errorf("anthropic %s: %s", resp.Status, msg)
 }
 
 func RunAnthropicChatStep(
@@ -453,7 +426,7 @@ func RunAnthropicChatStep(
 
 	// Validate continuation if provided
 	if cont != nil {
-		if !uctypes.AreModelsCompatible(chat.APIType, chatOpts.Config.Model, cont.Model) {
+		if chatOpts.Config.Model != cont.Model {
 			return nil, nil, nil, fmt.Errorf("cannot continue with a different model, model:%q, cont-model:%q", chatOpts.Config.Model, cont.Model)
 		}
 	}
@@ -481,14 +454,23 @@ func RunAnthropicChatStep(
 		return nil, nil, nil, err
 	}
 
-	httpClient, err := aiutil.MakeHTTPClient(chatOpts.Config.ProxyURL)
-	if err != nil {
-		return nil, nil, nil, err
+	httpClient := &http.Client{
+		Timeout: 0, // rely on ctx; streaming can be long
+	}
+	// Proxy support
+	if chatOpts.Config.ProxyURL != "" {
+		pURL, perr := url.Parse(chatOpts.Config.ProxyURL)
+		if perr != nil {
+			return nil, nil, nil, fmt.Errorf("invalid proxy URL: %w", perr)
+		}
+		httpClient.Transport = &http.Transport{
+			Proxy: http.ProxyURL(pURL),
+		}
 	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, nil, nil, sanitizeHostnameInError(err)
+		return nil, nil, nil, err
 	}
 	defer resp.Body.Close()
 
@@ -526,7 +508,7 @@ func RunAnthropicChatStep(
 	// Use eventsource decoder for proper SSE parsing
 	decoder := eventsource.NewDecoder(resp.Body)
 
-	stopReason, rtnMessage := handleAnthropicStreamingResp(ctx, sse, decoder, cont, chatOpts)
+	stopReason, rtnMessage := handleAnthropicStreamingResp(ctx, sse, decoder, cont)
 	return stopReason, rtnMessage, rateLimitInfo, nil
 }
 
@@ -536,7 +518,6 @@ func handleAnthropicStreamingResp(
 	sse *sse.SSEHandlerCh,
 	decoder *eventsource.Decoder,
 	cont *uctypes.WaveContinueResponse,
-	chatOpts uctypes.WaveChatOpts,
 ) (*uctypes.WaveStopReason, *anthropicChatMessage) {
 	// Per-response state
 	state := &streamingState{
@@ -546,7 +527,6 @@ func handleAnthropicStreamingResp(
 			Role:      "assistant",
 			Content:   []anthropicMessageContentBlock{},
 		},
-		chatOpts: chatOpts,
 	}
 
 	var rtnStopReason *uctypes.WaveStopReason
@@ -555,10 +535,8 @@ func handleAnthropicStreamingResp(
 	defer func() {
 		// Set usage in the returned message
 		if state.usage != nil {
+			// Set model in usage for internal use
 			state.usage.Model = state.model
-			if state.webSearchCount > 0 {
-				state.usage.NativeWebSearchCount = state.webSearchCount
-			}
 			state.rtnMessage.Usage = state.usage
 		}
 
@@ -589,13 +567,6 @@ func handleAnthropicStreamingResp(
 				// Normal end of stream
 				break
 			}
-			if sse.Err() != nil {
-				return &uctypes.WaveStopReason{
-					Kind:      uctypes.StopKindCanceled,
-					ErrorType: "client_disconnect",
-					ErrorText: "client disconnected",
-				}, extractPartialTextFromState(state)
-			}
 			// transport error mid-stream
 			_ = sse.AiMsgError(err.Error())
 			return &uctypes.WaveStopReason{
@@ -625,37 +596,6 @@ func handleAnthropicStreamingResp(
 	return rtnStopReason, state.rtnMessage
 }
 
-func extractPartialTextFromState(state *streamingState) *anthropicChatMessage {
-	var content []anthropicMessageContentBlock
-	for _, block := range state.rtnMessage.Content {
-		if block.Type == "text" && block.Text != "" {
-			content = append(content, block)
-		}
-	}
-	var partialIdx []int
-	for idx, st := range state.blockMap {
-		if st.kind == blockText && st.contentBlock != nil && st.contentBlock.Text != "" {
-			partialIdx = append(partialIdx, idx)
-		}
-	}
-	sort.Ints(partialIdx)
-	for _, idx := range partialIdx {
-		st := state.blockMap[idx]
-		if st.kind == blockText && st.contentBlock != nil && st.contentBlock.Text != "" {
-			content = append(content, *st.contentBlock)
-		}
-	}
-	if len(content) == 0 {
-		return nil
-	}
-	return &anthropicChatMessage{
-		MessageId: state.rtnMessage.MessageId,
-		Role:      "assistant",
-		Content:   content,
-		Usage:     state.rtnMessage.Usage,
-	}
-}
-
 // handleAnthropicEvent processes one SSE event block. It may emit SSE parts
 // and/or return a StopReason when the stream is complete.
 //
@@ -670,13 +610,6 @@ func handleAnthropicEvent(
 	state *streamingState,
 	cont *uctypes.WaveContinueResponse,
 ) (stopFromDelta *string, final *uctypes.WaveStopReason) {
-	if err := sse.Err(); err != nil {
-		return nil, &uctypes.WaveStopReason{
-			Kind:      uctypes.StopKindCanceled,
-			ErrorType: "client_disconnect",
-			ErrorText: "client disconnected",
-		}
-	}
 	eventName := event.Event()
 	data := event.Data()
 	switch eventName {
@@ -769,10 +702,6 @@ func handleAnthropicEvent(
 			}
 			state.blockMap[idx] = st
 			_ = sse.AiMsgToolInputStart(tcID, tName)
-		case "server_tool_use":
-			if ev.ContentBlock.Name == "web_search" {
-				state.webSearchCount++
-			}
 		default:
 			// ignore other block types gracefully per Anthropic guidance :contentReference[oaicite:18]{index=18}
 		}
@@ -812,7 +741,6 @@ func handleAnthropicEvent(
 			if st.kind == blockToolUse {
 				st.accumJSON.Write(ev.Delta.PartialJSON)
 				_ = sse.AiMsgToolInputDelta(st.toolCallID, ev.Delta.PartialJSON)
-				aiutil.SendToolProgress(st.toolCallID, st.toolName, st.accumJSON.Bytes(), state.chatOpts, sse, true)
 			}
 		case "signature_delta":
 			// Accumulate signature for thinking blocks
@@ -865,7 +793,6 @@ func handleAnthropicEvent(
 				}
 			}
 			_ = sse.AiMsgToolInputAvailable(st.toolCallID, st.toolName, raw)
-			aiutil.SendToolProgress(st.toolCallID, st.toolName, raw, state.chatOpts, sse, false)
 			state.toolCalls = append(state.toolCalls, uctypes.WaveToolCall{
 				ID:    st.toolCallID,
 				Name:  st.toolName,
@@ -880,9 +807,6 @@ func handleAnthropicEvent(
 			}
 			state.rtnMessage.Content = append(state.rtnMessage.Content, toolUseBlock)
 		}
-		// extractPartialTextFromState reads blockMap for still-in-flight content, so remove completed blocks
-		// once they have been appended to rtnMessage.Content to avoid duplicate text on disconnect.
-		delete(state.blockMap, *ev.Index)
 		return nil, nil
 
 	case "message_delta":
@@ -953,7 +877,7 @@ func handleAnthropicEvent(
 		}
 
 	default:
-		logutil.DevPrintf("unknown anthropic event type: %s", eventName)
+		log.Printf("unknown anthropic event type: %s", eventName)
 		return nil, nil
 	}
 }

@@ -3,6 +3,7 @@
 
 import { Button } from "@/app/element/button";
 import { Input } from "@/app/element/input";
+import { t } from "@/util/i18n";
 import React, { memo, useState } from "react";
 
 export enum EntryManagerType {
@@ -32,9 +33,14 @@ export const EntryManagerOverlay = memo(
         getReferenceProps,
     }: EntryManagerOverlayProps) => {
         const [value, setValue] = useState(startingValue);
+        const entryManagerTitleMap: Record<EntryManagerType, string> = {
+            [EntryManagerType.NewFile]: t("preview.directory.newFile"),
+            [EntryManagerType.NewDirectory]: t("preview.directory.newFolder"),
+            [EntryManagerType.EditName]: t("preview.directory.rename"),
+        };
         return (
             <div className="entry-manager-overlay" ref={forwardRef} style={style} {...(getReferenceProps?.() ?? {})}>
-                <div className="entry-manager-type">{entryManagerType}</div>
+                <div className="entry-manager-type">{entryManagerTitleMap[entryManagerType]}</div>
                 <div className="entry-manager-input">
                     <Input
                         value={value}
@@ -51,10 +57,10 @@ export const EntryManagerOverlay = memo(
                 </div>
                 <div className="entry-manager-buttons">
                     <Button className="py-[4px]" onClick={() => onSave(value)}>
-                        Save
+                        {t("waveConfig.save")}
                     </Button>
                     <Button className="py-[4px] red outlined" onClick={onCancel}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                 </div>
             </div>

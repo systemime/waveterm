@@ -201,15 +201,15 @@ const TypeAheadModal = ({
     const renderBackdrop = (onClick) => <div className="type-ahead-modal-backdrop" onClick={onClick}></div>;
 
     const handleKeyDown = (e) => {
-        onKeyDown?.(e);
+        onKeyDown && onKeyDown(e);
     };
 
     const handleChange = (value) => {
-        onChange?.(value);
+        onChange && onChange(value);
     };
 
     const handleSelect = (value) => {
-        onSelect?.(value);
+        onSelect && onSelect(value);
     };
 
     const renderModal = () => (

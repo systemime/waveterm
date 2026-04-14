@@ -1,10 +1,13 @@
-// Copyright 2026, Command Line Inc.
+// Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { BlockNodeModel } from "@/app/block/blocktypes";
+import type { TabModel } from "@/app/store/tab-model";
 import { globalStore, WOS } from "@/app/store/global";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { WebView, WebViewModel } from "@/app/view/webview/webview";
+import { t } from "@/util/i18n";
 import { atom } from "jotai";
 
 const docsiteUrl = "https://docs.waveterm.dev/?ref=app";
@@ -14,11 +17,11 @@ class HelpViewModel extends WebViewModel {
         return HelpView;
     }
 
-    constructor(initOpts: ViewModelInitType) {
-        super(initOpts);
+    constructor(blockId: string, nodeModel: BlockNodeModel, tabModel: TabModel) {
+        super(blockId, nodeModel, tabModel);
         this.viewText = atom((get) => {
             // force a dependency on meta.url so we re-render the buttons when the url changes
-            void (get(this.blockAtom)?.meta?.url || get(this.homepageUrl));
+            get(this.blockAtom)?.meta?.url || get(this.homepageUrl);
             return [
                 {
                     elemtype: "iconbutton",
@@ -43,7 +46,7 @@ class HelpViewModel extends WebViewModel {
         this.homepageUrl = atom(docsiteUrl);
         this.viewType = "help";
         this.viewIcon = atom("circle-question");
-        this.viewName = atom("Help");
+        this.viewName = atom(t("help.viewName"));
     }
 
     setZoomFactor(factor: number | null) {
@@ -71,7 +74,6 @@ class HelpViewModel extends WebViewModel {
         if (globalStore.get(this.domReady)) {
             curZoom = this.webviewRef.current?.getZoomFactor() || 1;
         }
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const model = this; // for the closure to work (this is getting unset)
         function makeZoomFactorMenuItem(label: string, factor: number): ContextMenuItem {
             return {
@@ -84,7 +86,7 @@ class HelpViewModel extends WebViewModel {
             };
         }
         zoomSubMenu.push({
-            label: "Reset",
+            label: t("help.reset"),
             click: () => {
                 model.setZoomFactor(null);
             },
@@ -104,7 +106,7 @@ class HelpViewModel extends WebViewModel {
 
         return [
             {
-                label: this.webviewRef.current?.isDevToolsOpened() ? "Close DevTools" : "Open DevTools",
+                label: this.webviewRef.current?.isDevToolsOpened() ? t("help.closeDevTools") : t("help.openDevTools"),
                 click: async () => {
                     if (this.webviewRef.current) {
                         if (this.webviewRef.current.isDevToolsOpened()) {
@@ -116,7 +118,7 @@ class HelpViewModel extends WebViewModel {
                 },
             },
             {
-                label: "Set Zoom Factor",
+                label: t("help.setZoomFactor"),
                 submenu: zoomSubMenu,
             },
         ];

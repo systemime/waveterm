@@ -15,12 +15,8 @@ type WshRpcMethodDecl struct {
 	Command                 string
 	CommandType             string
 	MethodName              string
-	CommandDataTypes        []reflect.Type
+	CommandDataType         reflect.Type
 	DefaultResponseDataType reflect.Type
-}
-
-func (decl *WshRpcMethodDecl) GetCommandDataTypes() []reflect.Type {
-	return decl.CommandDataTypes
 }
 
 var contextRType = reflect.TypeOf((*context.Context)(nil)).Elem()
@@ -79,11 +75,11 @@ func generateWshCommandDecl(method reflect.Method) *WshRpcMethodDecl {
 	decl.Command = strings.ToLower(cmdStr)
 	decl.CommandType = getWshCommandType(method)
 	decl.MethodName = method.Name
-	var cdataTypes []reflect.Type
-	for idx := 1; idx < method.Type.NumIn(); idx++ {
-		cdataTypes = append(cdataTypes, method.Type.In(idx))
+	var cdataType reflect.Type
+	if method.Type.NumIn() > 1 {
+		cdataType = method.Type.In(1)
 	}
-	decl.CommandDataTypes = cdataTypes
+	decl.CommandDataType = cdataType
 	decl.DefaultResponseDataType = getWshMethodResponseType(decl.CommandType, method)
 	return decl
 }

@@ -4,7 +4,6 @@
 import { FocusManager } from "@/app/store/focusManager";
 import { getSettingsKeyAtom } from "@/app/store/global";
 import { BlockService } from "@/app/store/services";
-import * as WOS from "@/app/store/wos";
 import { atomWithThrottle, boundNumber, fireAndForget } from "@/util/util";
 import { Atom, atom, Getter, PrimitiveAtom, Setter } from "jotai";
 import { splitAtom } from "jotai/utils";
@@ -89,7 +88,7 @@ export class LayoutModel {
     /**
      * WaveObject atom for persistence
      */
-    private waveObjectAtom: Atom<LayoutState>;
+    private waveObjectAtom: WritableWaveObjectAtom<LayoutState>;
     /**
      * Debounce timer for persistence
      */
@@ -588,7 +587,7 @@ export class LayoutModel {
             waveObj.leaforder = this.treeState.leafOrder;
             waveObj.pendingbackendactions = this.treeState.pendingBackendActions;
 
-            WOS.setObjectValue(waveObj, this.setter, true);
+            this.setter(this.waveObjectAtom, waveObj);
             this.persistDebounceTimer = null;
         }, 100);
     }
@@ -823,7 +822,7 @@ export class LayoutModel {
             return resizeAction?.resizeOperations.find((op) => op.nodeId === node.id)?.size ?? node.size;
         }
 
-        const additionalProps: LayoutNodeAdditionalProps = node.id in additionalPropsMap
+        const additionalProps: LayoutNodeAdditionalProps = additionalPropsMap.hasOwnProperty(node.id)
             ? additionalPropsMap[node.id]
             : { treeKey: "0" };
 
@@ -940,7 +939,7 @@ export class LayoutModel {
             this.magnifiedNodeId = undefined;
 
             // Unset the transform for the sole leaf.
-            if (lastLeafId in addlProps) addlProps[lastLeafId].transform = undefined;
+            if (addlProps.hasOwnProperty(lastLeafId)) addlProps[lastLeafId].transform = undefined;
         }
     }
 
@@ -1073,10 +1072,6 @@ export class LayoutModel {
                 isMagnified: atom((get) => {
                     const treeState = get(this.localTreeStateAtom);
                     return treeState.magnifiedNodeId === nodeid;
-                }),
-                anyMagnified: atom((get) => {
-                    const treeState = get(this.localTreeStateAtom);
-                    return treeState.magnifiedNodeId != null;
                 }),
                 isEphemeral: atom((get) => {
                     const ephemeralNode = get(this.ephemeralNode);
@@ -1509,7 +1504,7 @@ export class LayoutModel {
     getNodeAdditionalPropertiesAtom(nodeId: string): Atom<LayoutNodeAdditionalProps> {
         return atom((get) => {
             const addlProps = get(this.additionalProps);
-            if (nodeId in addlProps) return addlProps[nodeId];
+            if (addlProps.hasOwnProperty(nodeId)) return addlProps[nodeId];
         });
     }
 
@@ -1520,7 +1515,7 @@ export class LayoutModel {
      */
     getNodeAdditionalPropertiesById(nodeId: string): LayoutNodeAdditionalProps {
         const addlProps = this.getter(this.additionalProps);
-        if (nodeId in addlProps) return addlProps[nodeId];
+        if (addlProps.hasOwnProperty(nodeId)) return addlProps[nodeId];
     }
 
     /**

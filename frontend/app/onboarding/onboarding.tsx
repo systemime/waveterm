@@ -1,13 +1,12 @@
-// Copyright 2026, Command Line Inc.
+// Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 import Logo from "@/app/asset/logo.svg";
 import { Button } from "@/app/element/button";
 import { FlexiModal } from "@/app/modals/modal";
-import { OnboardingGradientBg } from "@/app/onboarding/onboarding-common";
 import { OnboardingFeatures } from "@/app/onboarding/onboarding-features";
 import { ClientModel } from "@/app/store/client-model";
-import { useSettingsKeyAtom } from "@/app/store/global";
+import { atoms } from "@/app/store/global";
 import { disableGlobalKeybindings, enableGlobalKeybindings, globalRefocus } from "@/app/store/keymodel";
 import { modalsModel } from "@/app/store/modalmodel";
 import * as WOS from "@/app/store/wos";
@@ -15,6 +14,7 @@ import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { WorkspaceLayoutModel } from "@/app/workspace/workspace-layout-model";
 import * as services from "@/store/services";
+import { t } from "@/util/i18n";
 import { fireAndForget } from "@/util/util";
 import { atom, PrimitiveAtom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
@@ -29,37 +29,15 @@ type PageName = "init" | "notelemetrystar" | "features";
 
 const pageNameAtom: PrimitiveAtom<PageName> = atom<PageName>("init");
 
-const InitPage = ({
-    isCompact,
-    telemetryUpdateFn,
-}: {
-    isCompact: boolean;
-    telemetryUpdateFn: (value: boolean) => Promise<void>;
-}) => {
-    const telemetrySetting = useSettingsKeyAtom("telemetry:enabled");
+const InitPage = ({ isCompact }: { isCompact: boolean }) => {
+    const settings = useAtomValue(atoms.settingsAtom);
     const clientData = useAtomValue(ClientModel.getInstance().clientAtom);
-    const [telemetryEnabled, setTelemetryEnabled] = useState<boolean>(!!telemetrySetting);
+    const [telemetryEnabled, setTelemetryEnabled] = useState<boolean>(!!settings["telemetry:enabled"]);
     const setPageName = useSetAtom(pageNameAtom);
 
-    const handleStarClick = async () => {
-        RpcApi.RecordTEventCommand(
-            TabRpcClient,
-            {
-                event: "onboarding:githubstar",
-                props: { "onboarding:githubstar": "star", "onboarding:page": "init" },
-            },
-            { noresponse: true }
-        );
-        const clientId = ClientModel.getInstance().clientId;
-        await RpcApi.SetMetaCommand(TabRpcClient, {
-            oref: WOS.makeORef("client", clientId),
-            meta: { "onboarding:githubstar": true },
-        });
-    };
-
     const acceptTos = () => {
-        if (!clientData?.tosagreed) {
-            fireAndForget(() => services.ClientService.AgreeTos());
+        if (!clientData.tosagreed) {
+            fireAndForget(services.ClientService.AgreeTos);
         }
         if (telemetryEnabled) {
             WorkspaceLayoutModel.getInstance().setAIPanelVisible(true);
@@ -69,13 +47,13 @@ const InitPage = ({
 
     const setTelemetry = (value: boolean) => {
         fireAndForget(() =>
-            telemetryUpdateFn(value).then(() => {
+            services.ClientService.TelemetryUpdate(value).then(() => {
                 setTelemetryEnabled(value);
             })
         );
     };
 
-    const label = telemetryEnabled ? "Enabled" : "Disabled";
+    const label = telemetryEnabled ? t("onboarding.telemetryEnabled") : t("onboarding.telemetryDisabled");
 
     return (
         <div className="flex flex-col h-full">
@@ -85,7 +63,7 @@ const InitPage = ({
                 <div className={`${isCompact ? "" : "mb-2.5"} flex justify-center`}>
                     <Logo />
                 </div>
-                <div className="text-center text-[25px] font-normal text-foreground">Welcome to Wave Terminal</div>
+                <div className="text-center text-[25px] font-normal text-foreground">{t("onboarding.welcomeTitle")}</div>
             </header>
             <OverlayScrollbarsComponent
                 className="flex-1 overflow-y-auto min-h-0"
@@ -97,54 +75,38 @@ const InitPage = ({
                             <a
                                 target="_blank"
                                 href="https://github.com/wavetermdev/waveterm?ref=install"
-                                rel="noopener"
-                                className="text-accent"
-                                onClick={handleStarClick}
+                                rel={"noopener"}
                             >
                                 <i className="text-[32px] text-white/50 fa-brands fa-github"></i>
                             </a>
                         </div>
                         <div className="flex flex-col items-start gap-1 flex-1">
-                            <div className="text-foreground text-base leading-[18px]">Support us on GitHub</div>
+                            <div className="text-foreground text-base leading-[18px]">{t("onboarding.supportGithubTitle")}</div>
                             <div className="text-secondary leading-5">
-                                We're <i>open source</i>, <i>open-model</i>, and committed to providing a free terminal
-                                for individual users. Please show your support by giving us a star on{" "}
+                                {t("onboarding.supportGithubBody")}{" "}
                                 <a
                                     target="_blank"
                                     href="https://github.com/wavetermdev/waveterm?ref=install"
-                                    rel="noopener"
-                                    className="text-accent"
-                                    onClick={handleStarClick}
+                                    rel={"noopener"}
                                 >
-                                    Github&nbsp;(wavetermdev/waveterm)
+                                    {t("onboarding.githubRepoLabel")}
                                 </a>
                             </div>
                         </div>
                     </div>
                     <div className="flex w-full items-center gap-[18px]">
                         <div>
-                            <a
-                                target="_blank"
-                                href="https://discord.gg/XfvZ334gwU"
-                                rel="noopener"
-                                className="text-accent"
-                            >
+                            <a target="_blank" href="https://discord.gg/XfvZ334gwU" rel={"noopener"}>
                                 <i className="text-[25px] text-white/50 fa-solid fa-people-group"></i>
                             </a>
                         </div>
                         <div className="flex flex-col items-start gap-1 flex-1">
-                            <div className="text-foreground text-base leading-[18px]">Join our Community</div>
+                            <div className="text-foreground text-base leading-[18px]">{t("onboarding.communityTitle")}</div>
                             <div className="text-secondary leading-5">
-                                Get help, submit feature requests, report bugs, or just chat with fellow terminal
-                                enthusiasts.
+                                {t("onboarding.communityBody")}
                                 <br />
-                                <a
-                                    target="_blank"
-                                    href="https://discord.gg/XfvZ334gwU"
-                                    rel="noopener"
-                                    className="text-accent"
-                                >
-                                    Join the Wave&nbsp;Discord&nbsp;Channel
+                                <a target="_blank" href="https://discord.gg/XfvZ334gwU" rel={"noopener"}>
+                                    {t("onboarding.communityLink")}
                                 </a>
                             </div>
                         </div>
@@ -155,15 +117,15 @@ const InitPage = ({
                         </div>
                         <div className="flex flex-col items-start gap-1 flex-1">
                             <div className="text-secondary leading-5">
-                                Anonymous usage data helps us improve features you use.
+                                {t("onboarding.privacyBody")}
                                 <br />
                                 <a
-                                    className="text-secondary! hover:underline!"
+                                    className="plain-link"
                                     target="_blank"
                                     href="https://waveterm.dev/privacy"
                                     rel="noopener"
                                 >
-                                    Privacy Policy
+                                    {t("onboarding.privacyPolicy")}
                                 </a>
                             </div>
                             <label className="flex items-center gap-2 cursor-pointer text-secondary">
@@ -182,7 +144,7 @@ const InitPage = ({
             <footer className={`unselectable flex-shrink-0 ${isCompact ? "mt-2" : "mt-5"}`}>
                 <div className="flex flex-row items-center justify-center [&>button]:!px-5 [&>button]:!py-2 [&>button]:text-sm [&>button:not(:first-child)]:ml-2.5">
                     <Button className="font-[600]" onClick={acceptTos}>
-                        Continue
+                        {t("onboarding.continue")}
                     </Button>
                 </div>
             </footer>
@@ -194,14 +156,6 @@ const NoTelemetryStarPage = ({ isCompact }: { isCompact: boolean }) => {
     const setPageName = useSetAtom(pageNameAtom);
 
     const handleStarClick = async () => {
-        RpcApi.RecordTEventCommand(
-            TabRpcClient,
-            {
-                event: "onboarding:githubstar",
-                props: { "onboarding:githubstar": "star", "onboarding:page": "notelemetry" },
-            },
-            { noresponse: true }
-        );
         const clientId = ClientModel.getInstance().clientId;
         await RpcApi.SetMetaCommand(TabRpcClient, {
             oref: WOS.makeORef("client", clientId),
@@ -212,14 +166,6 @@ const NoTelemetryStarPage = ({ isCompact }: { isCompact: boolean }) => {
     };
 
     const handleMaybeLater = async () => {
-        RpcApi.RecordTEventCommand(
-            TabRpcClient,
-            {
-                event: "onboarding:githubstar",
-                props: { "onboarding:githubstar": "later", "onboarding:page": "notelemetry" },
-            },
-            { noresponse: true }
-        );
         const clientId = ClientModel.getInstance().clientId;
         await RpcApi.SetMetaCommand(TabRpcClient, {
             oref: WOS.makeORef("client", clientId),
@@ -234,7 +180,9 @@ const NoTelemetryStarPage = ({ isCompact }: { isCompact: boolean }) => {
                 <div className={`flex justify-center`}>
                     <Logo />
                 </div>
-                <div className="text-center text-[25px] font-normal text-foreground">Telemetry Disabled ✓</div>
+                <div className="text-center text-[25px] font-normal text-foreground">
+                    {t("onboarding.telemetryDisabledTitle")}
+                </div>
             </header>
             <OverlayScrollbarsComponent
                 className="flex-1 overflow-y-auto min-h-0"
@@ -242,21 +190,18 @@ const NoTelemetryStarPage = ({ isCompact }: { isCompact: boolean }) => {
             >
                 <div className="flex flex-col items-center gap-6 w-full mb-2 unselectable">
                     <div className="text-center text-secondary leading-relaxed max-w-md">
-                        <p className="mb-4">No problem, we respect your privacy.</p>
-                        <p className="mb-4">
-                            But, without usage data, we're flying blind. A GitHub star helps us know Wave is useful and
-                            worth maintaining.
-                        </p>
+                        <p className="mb-4">{t("onboarding.telemetryDisabledLead")}</p>
+                        <p className="mb-4">{t("onboarding.telemetryDisabledBody")}</p>
                     </div>
                 </div>
             </OverlayScrollbarsComponent>
             <footer className={`unselectable flex-shrink-0 mt-2`}>
                 <div className="flex flex-row items-center justify-center gap-2.5 [&>button]:!px-5 [&>button]:!py-2 [&>button]:text-sm [&>button]:!h-[37px]">
                     <Button className="outlined green font-[600]" onClick={handleStarClick}>
-                        ⭐ Star on GitHub
+                        ⭐ {t("onboarding.starGithub")}
                     </Button>
                     <Button className="outlined grey font-[600]" onClick={handleMaybeLater}>
-                        Maybe Later
+                        {t("onboarding.maybeLater")}
                     </Button>
                 </div>
             </footer>
@@ -325,7 +270,7 @@ const NewInstallOnboardingModal = () => {
     let pageComp: React.JSX.Element = null;
     switch (pageName) {
         case "init":
-            pageComp = <InitPage isCompact={isCompact} telemetryUpdateFn={(value) => services.ClientService.TelemetryUpdate(value)} />;
+            pageComp = <InitPage isCompact={isCompact} />;
             break;
         case "notelemetrystar":
             pageComp = <NoTelemetryStarPage isCompact={isCompact} />;
@@ -343,7 +288,7 @@ const NewInstallOnboardingModal = () => {
 
     return (
         <FlexiModal className={`${widthClass} rounded-[10px] ${paddingClass} relative overflow-hidden`} ref={modalRef}>
-            <OnboardingGradientBg />
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.25] via-transparent to-accent/[0.05] pointer-events-none rounded-[10px]" />
             <div className="flex flex-col w-full h-full relative z-10">{pageComp}</div>
         </FlexiModal>
     );
@@ -351,4 +296,4 @@ const NewInstallOnboardingModal = () => {
 
 NewInstallOnboardingModal.displayName = "NewInstallOnboardingModal";
 
-export { InitPage, NewInstallOnboardingModal, NoTelemetryStarPage };
+export { NewInstallOnboardingModal };

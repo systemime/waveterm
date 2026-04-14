@@ -91,7 +91,6 @@ export function computeMoveNode(layoutState: LayoutTreeState, computeInsertActio
                     break;
                 }
             }
-        // falls through
         case DropDirection.Top:
             if (node.flexDirection === FlexDirection.Column) {
                 newMoveOperation = { parentId: nodeId, index: 0, node: nodeToMove };
@@ -125,7 +124,6 @@ export function computeMoveNode(layoutState: LayoutTreeState, computeInsertActio
                     break;
                 }
             }
-        // falls through
         case DropDirection.Bottom:
             if (node.flexDirection === FlexDirection.Column) {
                 newMoveOperation = { parentId: nodeId, index: 1, node: nodeToMove };
@@ -159,7 +157,6 @@ export function computeMoveNode(layoutState: LayoutTreeState, computeInsertActio
                     break;
                 }
             }
-        // falls through
         case DropDirection.Left:
             if (node.flexDirection === FlexDirection.Row) {
                 newMoveOperation = { parentId: nodeId, index: 0, node: nodeToMove };
@@ -186,7 +183,6 @@ export function computeMoveNode(layoutState: LayoutTreeState, computeInsertActio
                     break;
                 }
             }
-        // falls through
         case DropDirection.Right:
             if (node.flexDirection === FlexDirection.Row) {
                 newMoveOperation = { parentId: nodeId, index: 1, node: nodeToMove };
@@ -274,6 +270,7 @@ export function moveNode(layoutState: LayoutTreeState, action: LayoutTreeMoveNod
     if (oldParent) {
         removeChild(oldParent, node, startingIndex);
     }
+    
 }
 
 export function insertNode(layoutState: LayoutTreeState, action: LayoutTreeInsertNodeAction) {
@@ -294,6 +291,7 @@ export function insertNode(layoutState: LayoutTreeState, action: LayoutTreeInser
     if (action.focused) {
         layoutState.focusedNodeId = action.node.id;
     }
+    
 }
 
 export function insertNodeAtIndex(layoutState: LayoutTreeState, action: LayoutTreeInsertNodeAtIndexAction) {
@@ -318,6 +316,7 @@ export function insertNodeAtIndex(layoutState: LayoutTreeState, action: LayoutTr
     if (action.focused) {
         layoutState.focusedNodeId = action.node.id;
     }
+    
 }
 
 export function swapNode(layoutState: LayoutTreeState, action: LayoutTreeSwapNodeAction) {
@@ -349,6 +348,7 @@ export function swapNode(layoutState: LayoutTreeState, action: LayoutTreeSwapNod
 
     parentNode1.children[parentNode1Index] = node2;
     parentNode2.children[parentNode2Index] = node1;
+    
 }
 
 export function deleteNode(layoutState: LayoutTreeState, action: LayoutTreeDeleteNodeAction) {
@@ -374,6 +374,8 @@ export function deleteNode(layoutState: LayoutTreeState, action: LayoutTreeDelet
             console.error("unable to delete node, not found in tree");
         }
     }
+
+    
 }
 
 export function resizeNode(layoutState: LayoutTreeState, action: LayoutTreeResizeNodeAction) {
@@ -388,6 +390,7 @@ export function resizeNode(layoutState: LayoutTreeState, action: LayoutTreeResiz
         const node = findNode(layoutState.rootNode, resize.nodeId);
         node.size = resize.size;
     }
+    
 }
 
 export function focusNode(layoutState: LayoutTreeState, action: LayoutTreeFocusNodeAction) {
@@ -397,6 +400,7 @@ export function focusNode(layoutState: LayoutTreeState, action: LayoutTreeFocusN
     }
 
     layoutState.focusedNodeId = action.nodeId;
+    
 }
 
 export function magnifyNodeToggle(layoutState: LayoutTreeState, action: LayoutTreeMagnifyNodeToggleAction) {
@@ -414,6 +418,7 @@ export function magnifyNodeToggle(layoutState: LayoutTreeState, action: LayoutTr
         layoutState.magnifiedNodeId = action.nodeId;
         layoutState.focusedNodeId = action.nodeId;
     }
+    
 }
 
 export function clearTree(layoutState: LayoutTreeState) {
@@ -421,6 +426,7 @@ export function clearTree(layoutState: LayoutTreeState) {
     layoutState.leafOrder = undefined;
     layoutState.focusedNodeId = undefined;
     layoutState.magnifiedNodeId = undefined;
+    
 }
 
 export function replaceNode(layoutState: LayoutTreeState, action: LayoutTreeReplaceNodeAction) {
@@ -447,6 +453,7 @@ export function replaceNode(layoutState: LayoutTreeState, action: LayoutTreeRepl
     if (action.focused) {
         layoutState.focusedNodeId = newNode.id;
     }
+    
 }
 
 // ─── SPLIT HORIZONTAL ─────────────────────────────────────────────────────────────
@@ -490,6 +497,7 @@ export function splitHorizontal(layoutState: LayoutTreeState, action: LayoutTree
     if (action.focused) {
         layoutState.focusedNodeId = newNode.id;
     }
+    
 }
 
 // ─── SPLIT VERTICAL ─────────────────────────────────────────────────────────────
@@ -531,4 +539,5 @@ export function splitVertical(layoutState: LayoutTreeState, action: LayoutTreeSp
     if (action.focused) {
         layoutState.focusedNodeId = newNode.id;
     }
+    
 }

@@ -172,6 +172,11 @@ func fileCatRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	_, err = checkFileSize(path, MaxFileSize)
+	if err != nil {
+		return err
+	}
+
 	fileData := wshrpc.FileData{
 		Info: &wshrpc.FileInfo{
 			Path: path}}

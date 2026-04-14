@@ -749,8 +749,7 @@ func (conn *SSHConn) Connect(ctx context.Context, connFlags *wconfig.ConnKeyword
 	conn.FireConnChangeEvent()
 	err := conn.connectInternal(ctx, connFlags)
 	if err != nil {
-		errorCode, subCode := remote.ClassifyConnError(err)
-		isContextError := errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
+		errorCode := remote.ClassifyConnError(err)
 		conn.Infof(ctx, "ERROR [%s] %v\n\n", errorCode, err)
 		conn.WithLock(func() {
 			conn.Status = Status_Error
@@ -763,10 +762,8 @@ func (conn *SSHConn) Connect(ctx context.Context, connFlags *wconfig.ConnKeyword
 		telemetry.GoRecordTEventWrap(&telemetrydata.TEvent{
 			Event: "conn:connecterror",
 			Props: telemetrydata.TEventProps{
-				ConnType:         "ssh",
-				ConnErrorCode:    errorCode,
-				ConnSubErrorCode: subCode,
-				ConnContextError: isContextError,
+				ConnType:      "ssh",
+				ConnErrorCode: errorCode,
 			},
 		})
 	} else {

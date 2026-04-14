@@ -1,11 +1,12 @@
-// Copyright 2026, Command Line Inc.
+// Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CenteredDiv } from "@/app/element/quickelems";
-import { globalStore } from "@/app/store/jotaiStore";
+import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { BlockHeaderSuggestionControl } from "@/app/suggestion/suggestion";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { globalStore } from "@/store/global";
+import { t } from "@/util/i18n";
 import { isBlank, makeConnRoute } from "@/util/util";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { memo, useEffect } from "react";
@@ -16,7 +17,6 @@ import { ErrorOverlay } from "./preview-error-overlay";
 import { MarkdownPreview } from "./preview-markdown";
 import type { PreviewModel } from "./preview-model";
 import { StreamingPreview } from "./preview-streaming";
-import type { PreviewEnv } from "./previewenv";
 
 export type SpecializedViewProps = {
     model: PreviewModel;
@@ -59,13 +59,16 @@ const SpecializedView = memo(({ parentRef, model }: SpecializedViewProps) => {
     }
     const SpecializedViewComponent = SpecializedViewMap[specializedView.specializedView];
     if (!SpecializedViewComponent) {
-        return <CenteredDiv>Invalid Specialized View Component ({specializedView.specializedView})</CenteredDiv>;
+        return (
+            <CenteredDiv>
+                {t("preview.invalidSpecializedView", { view: specializedView.specializedView })}
+            </CenteredDiv>
+        );
     }
     return <SpecializedViewComponent key={path} model={model} parentRef={parentRef} />;
 });
 
 const fetchSuggestions = async (
-    env: PreviewEnv,
     model: PreviewModel,
     query: string,
     reqContext: SuggestionRequestContext
@@ -76,7 +79,7 @@ const fetchSuggestions = async (
         route = null;
     }
     if (reqContext?.dispose) {
-        env.rpc.DisposeSuggestionsCommand(TabRpcClient, reqContext.widgetid, { noresponse: true, route: route });
+        RpcApi.DisposeSuggestionsCommand(TabRpcClient, reqContext.widgetid, { noresponse: true, route: route });
         return null;
     }
     const fileInfo = await globalStore.get(model.statFile);
@@ -91,7 +94,7 @@ const fetchSuggestions = async (
         reqnum: reqContext.reqnum,
         "file:connection": conn,
     };
-    return await env.rpc.FetchSuggestionsCommand(TabRpcClient, sdata, {
+    return await RpcApi.FetchSuggestionsCommand(TabRpcClient, sdata, {
         route: route,
     });
 };
@@ -106,7 +109,6 @@ function PreviewView({
     contentRef: React.RefObject<HTMLDivElement>;
     model: PreviewModel;
 }) {
-    const env = useWaveEnv<PreviewEnv>();
     const connStatus = useAtomValue(model.connStatus);
     const [errorMsg, setErrorMsg] = useAtom(model.errorMsgAtom);
     const connection = useAtomValue(model.connectionImmediate);
@@ -143,7 +145,7 @@ function PreviewView({
         }
     };
     const fetchSuggestionsFn = async (query, ctx) => {
-        return await fetchSuggestions(env, model, query, ctx);
+        return await fetchSuggestions(model, query, ctx);
     };
 
     return (
@@ -161,7 +163,7 @@ function PreviewView({
                 onSelect={handleSelect}
                 onTab={handleTab}
                 fetchSuggestions={fetchSuggestionsFn}
-                placeholderText="Open File..."
+                placeholderText={t("preview.openFile")}
             />
         </>
     );

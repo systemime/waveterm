@@ -343,8 +343,6 @@ func startupActivityUpdate(firstLaunch bool) {
 			ClientArch:          wavebase.ClientArch(),
 			ClientOSRelease:     wavebase.UnameKernelRelease(),
 			ClientIsDev:         wavebase.IsDevMode(),
-			ClientPackageType:   wavebase.ClientPackageType(),
-			ClientMacOSVersion:  wavebase.ClientMacOSVersion(),
 			AutoUpdateChannel:   autoUpdateChannel,
 			AutoUpdateEnabled:   autoUpdateEnabled,
 			LocalShellType:      shellType,
@@ -384,6 +382,7 @@ func shutdownActivityUpdate() {
 
 func createMainWshClient() {
 	rpc := wshserver.GetMainRpcClient()
+	wshfs.RpcClient = rpc
 	wshutil.DefaultRouter.RegisterTrustedLeaf(rpc, wshutil.DefaultRoute)
 	wps.Broker.SetClient(wshutil.DefaultRouter)
 	localInitialEnv := envutil.PruneInitialEnv(envutil.SliceToMap(os.Environ()))
@@ -392,8 +391,6 @@ func createMainWshClient() {
 	localConnWsh := wshutil.MakeWshRpc(wshrpc.RpcContext{Conn: wshrpc.LocalConnName}, remoteImpl, "conn:local")
 	go wshremote.RunSysInfoLoop(localConnWsh, wshrpc.LocalConnName)
 	wshutil.DefaultRouter.RegisterTrustedLeaf(localConnWsh, wshutil.MakeConnectionRouteId(wshrpc.LocalConnName))
-	wshfs.RpcClient = localConnWsh
-	wshfs.RpcClientRouteId = wshutil.MakeConnectionRouteId(wshrpc.LocalConnName)
 }
 
 func grabAndRemoveEnvVars() error {
@@ -561,7 +558,6 @@ func main() {
 	createMainWshClient()
 	sigutil.InstallShutdownSignalHandlers(doShutdown)
 	sigutil.InstallSIGUSR1Handler()
-	wconfig.MigratePresetsBackgrounds()
 	startConfigWatcher()
 	aiusechat.InitAIModeConfigWatcher()
 	maybeStartPprofServer()
@@ -575,11 +571,7 @@ func main() {
 	blocklogger.InitBlockLogger()
 	jobcontroller.InitJobController()
 	blockcontroller.InitBlockController()
-	err = wcore.InitBadgeStore()
-	if err != nil {
-		log.Printf("error initializing badge store: %v\n", err)
-		return
-	}
+	wcore.InitTabIndicatorStore()
 	go func() {
 		defer func() {
 			panichandler.PanicHandler("GetSystemSummary", recover())

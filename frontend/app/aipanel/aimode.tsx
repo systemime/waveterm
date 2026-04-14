@@ -5,6 +5,7 @@ import { Tooltip } from "@/app/element/tooltip";
 import { atoms, getSettingsKeyAtom } from "@/app/store/global";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
+import { t } from "@/util/i18n";
 import { cn, fireAndForget, makeIconClass } from "@/util/util";
 import { useAtomValue } from "jotai";
 import { memo, useRef, useState } from "react";
@@ -238,7 +239,7 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
                 >
                     <div className="flex items-center gap-1 text-[10px] text-yellow-600 mt-1 ml-1 cursor-default">
                         <i className="fa fa-triangle-exclamation"></i>
-                        <span>No Tools Support</span>
+                        <span>{t("aiPanel.noToolsSupport")}</span>
                     </div>
                 </Tooltip>
             )}
@@ -266,7 +267,7 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
                                             </div>
                                             {section.isIncompatible && (
                                                 <div className="text-center text-[11px] text-red-300 pb-1">
-                                                    (Start a New Chat to Switch)
+                                                    {t("aiPanel.startNewChatToSwitch")}
                                                 </div>
                                             )}
                                             {section.noTelemetry && (
@@ -274,7 +275,7 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
                                                     onClick={handleEnableTelemetry}
                                                     className="text-center text-[11px] text-green-300 hover:text-green-200 pb-1 cursor-pointer transition-colors w-full"
                                                 >
-                                                    (enable telemetry to unlock Wave AI Cloud)
+                                                    {t("aiPanel.enableTelemetryUnlock")}
                                                 </button>
                                             )}
                                         </>
@@ -310,14 +311,14 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
                             className="w-full flex items-center gap-2 px-3 pt-1 pb-1 text-gray-300 hover:bg-zinc-700 cursor-pointer transition-colors text-left"
                         >
                             <i className={makeIconClass("plus", false)}></i>
-                            <span className="text-sm">New Chat</span>
+                            <span className="text-sm">{t("aiPanel.newChat")}</span>
                         </button>
                         <button
                             onClick={handleConfigureClick}
                             className="w-full flex items-center gap-2 px-3 pt-1 pb-2 text-gray-300 hover:bg-zinc-700 cursor-pointer transition-colors text-left"
                         >
                             <i className={makeIconClass("gear", false)}></i>
-                            <span className="text-sm">Configure Modes</span>
+                            <span className="text-sm">{t("aiPanel.configureModes")}</span>
                         </button>
                     </div>
                 </>

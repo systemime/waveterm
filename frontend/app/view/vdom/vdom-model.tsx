@@ -1,11 +1,11 @@
-// Copyright 2026, Command Line Inc.
+// Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 import { BlockNodeModel } from "@/app/block/blocktypes";
-import { getBlockMetaKeyAtom, globalStore, WOS } from "@/app/store/global";
 import type { TabModel } from "@/app/store/tab-model";
+import { getBlockMetaKeyAtom, globalStore, WOS } from "@/app/store/global";
 import { makeORef } from "@/app/store/wos";
-import { waveEventSubscribeSingle } from "@/app/store/wps";
+import { waveEventSubscribe } from "@/app/store/wps";
 import { RpcResponseHelper, WshClient } from "@/app/store/wshclient";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { makeFeBlockRouteId } from "@/app/store/wshrouter";
@@ -140,7 +140,7 @@ export class VDomModel {
     hasBackendWork: boolean = false;
     noPadding: jotai.PrimitiveAtom<boolean>;
 
-    constructor({ blockId, nodeModel, tabModel }: ViewModelInitType) {
+    constructor(blockId: string, nodeModel: BlockNodeModel, tabModel: TabModel) {
         this.viewType = "vdom";
         this.blockId = blockId;
         this.nodeModel = nodeModel;
@@ -161,10 +161,10 @@ export class VDomModel {
         if (curBackendRoute) {
             this.queueUpdate(true);
         }
-        this.routeGoneUnsub = waveEventSubscribeSingle({
+        this.routeGoneUnsub = waveEventSubscribe({
             eventType: "route:down",
             scope: curBackendRoute,
-            handler: (_event) => {
+            handler: (event: WaveEvent) => {
                 this.disposed = true;
                 const shouldPersist = globalStore.get(this.persist);
                 if (!shouldPersist) {

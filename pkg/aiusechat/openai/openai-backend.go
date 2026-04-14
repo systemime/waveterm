@@ -528,9 +528,18 @@ func RunOpenAIChatStep(
 		return nil, nil, nil, err
 	}
 
-	httpClient, err := aiutil.MakeHTTPClient(chatOpts.Config.ProxyURL)
-	if err != nil {
-		return nil, nil, nil, err
+	httpClient := &http.Client{
+		Timeout: 0, // rely on ctx; streaming can be long
+	}
+	// Proxy support
+	if chatOpts.Config.ProxyURL != "" {
+		pURL, perr := url.Parse(chatOpts.Config.ProxyURL)
+		if perr != nil {
+			return nil, nil, nil, fmt.Errorf("invalid proxy URL: %w", perr)
+		}
+		httpClient.Transport = &http.Transport{
+			Proxy: http.ProxyURL(pURL),
+		}
 	}
 
 	resp, err := httpClient.Do(req)

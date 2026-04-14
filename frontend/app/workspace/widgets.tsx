@@ -1,15 +1,16 @@
-// Copyright 2026, Command Line Inc.
+// Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 import { Tooltip } from "@/app/element/tooltip";
+import { ContextMenuModel } from "@/app/store/contextmenu";
+import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
-import { shouldIncludeWidgetForWorkspace } from "@/app/workspace/widgetfilter";
-import { modalsModel } from "@/store/modalmodel";
+import { atoms, createBlock, isDev } from "@/store/global";
+import { t } from "@/util/i18n";
 import { fireAndForget, isBlank, makeIconClass } from "@/util/util";
 import {
-    autoUpdate,
     FloatingPortal,
+    autoUpdate,
     offset,
     shift,
     useDismiss,
@@ -19,24 +20,6 @@ import {
 import clsx from "clsx";
 import { useAtomValue } from "jotai";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-
-export type WidgetsEnv = WaveEnvSubset<{
-    isDev: WaveEnv["isDev"];
-    electron: {
-        openBuilder: WaveEnv["electron"]["openBuilder"];
-    };
-    rpc: {
-        ListAllAppsCommand: WaveEnv["rpc"]["ListAllAppsCommand"];
-    };
-    atoms: {
-        fullConfigAtom: WaveEnv["atoms"]["fullConfigAtom"];
-        hasConfigErrors: WaveEnv["atoms"]["hasConfigErrors"];
-        workspaceId: WaveEnv["atoms"]["workspaceId"];
-        hasCustomAIPresetsAtom: WaveEnv["atoms"]["hasCustomAIPresetsAtom"];
-    };
-    createBlock: WaveEnv["createBlock"];
-    showContextMenu: WaveEnv["showContextMenu"];
-}>;
 
 function sortByDisplayOrder(wmap: { [key: string]: WidgetConfigType }): WidgetConfigType[] {
     if (wmap == null) {
@@ -49,18 +32,12 @@ function sortByDisplayOrder(wmap: { [key: string]: WidgetConfigType }): WidgetCo
     return wlist;
 }
 
-type WidgetPropsType = {
-    widget: WidgetConfigType;
-    mode: "normal" | "compact" | "supercompact";
-    env: WidgetsEnv;
-};
-
-async function handleWidgetSelect(widget: WidgetConfigType, env: WidgetsEnv) {
+async function handleWidgetSelect(widget: WidgetConfigType) {
     const blockDef = widget.blockdef;
-    env.createBlock(blockDef, widget.magnified);
+    createBlock(blockDef, widget.magnified);
 }
 
-const Widget = memo(({ widget, mode, env }: WidgetPropsType) => {
+const Widget = memo(({ widget, mode }: { widget: WidgetConfigType; mode: "normal" | "compact" | "supercompact" }) => {
     const [isTruncated, setIsTruncated] = useState(false);
     const labelRef = useRef<HTMLDivElement>(null);
 
@@ -83,7 +60,7 @@ const Widget = memo(({ widget, mode, env }: WidgetPropsType) => {
                 mode === "supercompact" ? "text-sm" : "text-lg",
                 widget["display:hidden"] && "hidden"
             )}
-            divOnClick={() => handleWidgetSelect(widget, env)}
+            divOnClick={() => handleWidgetSelect(widget)}
         >
             <div style={{ color: widget.color }}>
                 <i className={makeIconClass(widget.icon, true, { defaultIcon: "browser" })}></i>
@@ -108,96 +85,77 @@ function calculateGridSize(appCount: number): number {
     return 6;
 }
 
-function SettingsTooltipContent({ hasConfigErrors }: { hasConfigErrors: boolean }) {
-    if (!hasConfigErrors) {
-        return "Settings & Help";
-    }
-    return (
-        <div className="flex flex-col p-1">
-            <div className="mb-1">Settings &amp; Help</div>
-            <div className="flex items-center gap-1 mt-0.5 text-error">
-                <i className="fa fa-solid fa-circle-exclamation"></i>
-                <span>Config Errors</span>
-            </div>
-        </div>
-    );
-}
+const AppsFloatingWindow = memo(
+    ({
+        isOpen,
+        onClose,
+        referenceElement,
+    }: {
+        isOpen: boolean;
+        onClose: () => void;
+        referenceElement: HTMLElement;
+    }) => {
+        const [apps, setApps] = useState<AppInfo[]>([]);
+        const [loading, setLoading] = useState(true);
 
-type FloatingWindowPropsType = {
-    isOpen: boolean;
-    onClose: () => void;
-    referenceElement: HTMLElement;
-    hasConfigErrors?: boolean;
-};
+        const { refs, floatingStyles, context } = useFloating({
+            open: isOpen,
+            onOpenChange: onClose,
+            placement: "left-start",
+            middleware: [offset(-2), shift({ padding: 12 })],
+            whileElementsMounted: autoUpdate,
+            elements: {
+                reference: referenceElement,
+            },
+        });
 
-const AppsFloatingWindow = memo(({ isOpen, onClose, referenceElement }: FloatingWindowPropsType) => {
-    const [apps, setApps] = useState<AppInfo[]>([]);
-    const [loading, setLoading] = useState(true);
-    const env = useWaveEnv<WidgetsEnv>();
+        const dismiss = useDismiss(context);
+        const { getFloatingProps } = useInteractions([dismiss]);
 
-    const { refs, floatingStyles, context } = useFloating({
-        open: isOpen,
-        onOpenChange: onClose,
-        placement: "left-start",
-        middleware: [offset(-2), shift({ padding: 12 })],
-        whileElementsMounted: autoUpdate,
-        elements: {
-            reference: referenceElement,
-        },
-    });
+        useEffect(() => {
+            if (!isOpen) return;
 
-    const dismiss = useDismiss(context);
-    const { getFloatingProps } = useInteractions([dismiss]);
-    const handleOpenBuilder = useCallback(() => {
-        env.electron.openBuilder(null);
-        onClose();
-    }, [onClose, env]);
+            const fetchApps = async () => {
+                setLoading(true);
+                try {
+                    const allApps = await RpcApi.ListAllAppsCommand(TabRpcClient);
+                    const localApps = allApps
+                        .filter((app) => !app.appid.startsWith("draft/"))
+                        .sort((a, b) => {
+                            const aName = a.appid.replace(/^local\//, "");
+                            const bName = b.appid.replace(/^local\//, "");
+                            return aName.localeCompare(bName);
+                        });
+                    setApps(localApps);
+                } catch (error) {
+                    console.error("Failed to fetch apps:", error);
+                    setApps([]);
+                } finally {
+                    setLoading(false);
+                }
+            };
 
-    useEffect(() => {
-        if (!isOpen) return;
+            fetchApps();
+        }, [isOpen]);
 
-        const fetchApps = async () => {
-            setLoading(true);
-            try {
-                const allApps = await env.rpc.ListAllAppsCommand(TabRpcClient);
-                const localApps = allApps
-                    .filter((app) => !app.appid.startsWith("draft/"))
-                    .sort((a, b) => {
-                        const aName = a.appid.replace(/^local\//, "");
-                        const bName = b.appid.replace(/^local\//, "");
-                        return aName.localeCompare(bName);
-                    });
-                setApps(localApps);
-            } catch (error) {
-                console.error("Failed to fetch apps:", error);
-                setApps([]);
-            } finally {
-                setLoading(false);
-            }
-        };
+        if (!isOpen) return null;
 
-        fetchApps();
-    }, [isOpen]);
+        const gridSize = calculateGridSize(apps.length);
 
-    if (!isOpen) return null;
-
-    const gridSize = calculateGridSize(apps.length);
-
-    return (
-        <FloatingPortal>
-            <div
-                ref={refs.setFloating}
-                style={floatingStyles}
-                {...getFloatingProps()}
-                className="bg-modalbg border border-border rounded-lg shadow-xl z-50 overflow-hidden"
-            >
-                <div className="p-4">
+        return (
+            <FloatingPortal>
+                <div
+                    ref={refs.setFloating}
+                    style={floatingStyles}
+                    {...getFloatingProps()}
+                    className="bg-modalbg border border-border rounded-lg shadow-xl p-4 z-50"
+                >
                     {loading ? (
                         <div className="flex items-center justify-center p-8">
                             <i className="fa fa-solid fa-spinner fa-spin text-2xl text-muted"></i>
                         </div>
                     ) : apps.length === 0 ? (
-                        <div className="text-muted text-sm p-4 text-center">No local apps found</div>
+                        <div className="text-muted text-sm p-4 text-center">{t("workspace.noLocalApps")}</div>
                     ) : (
                         <div
                             className="grid gap-3"
@@ -224,7 +182,7 @@ const AppsFloatingWindow = memo(({ isOpen, onClose, referenceElement }: Floating
                                                     "tsunami:appid": app.appid,
                                                 },
                                             };
-                                            env.createBlock(blockDef);
+                                            createBlock(blockDef);
                                             onClose();
                                         }}
                                     >
@@ -240,22 +198,21 @@ const AppsFloatingWindow = memo(({ isOpen, onClose, referenceElement }: Floating
                         </div>
                     )}
                 </div>
-                <button
-                    type="button"
-                    className="w-full px-4 py-2 border-t border-border text-xs text-secondary text-center hover:bg-hoverbg hover:text-white transition-colors cursor-pointer flex items-center justify-center gap-2"
-                    onClick={handleOpenBuilder}
-                >
-                    <i className="fa fa-solid fa-hammer"></i>
-                    Build/Edit Apps
-                </button>
-            </div>
-        </FloatingPortal>
-    );
-});
+            </FloatingPortal>
+        );
+    }
+);
 
 const SettingsFloatingWindow = memo(
-    ({ isOpen, onClose, referenceElement, hasConfigErrors }: FloatingWindowPropsType) => {
-        const env = useWaveEnv<WidgetsEnv>();
+    ({
+        isOpen,
+        onClose,
+        referenceElement,
+    }: {
+        isOpen: boolean;
+        onClose: () => void;
+        referenceElement: HTMLElement;
+    }) => {
         const { refs, floatingStyles, context } = useFloating({
             open: isOpen,
             onOpenChange: onClose,
@@ -275,34 +232,33 @@ const SettingsFloatingWindow = memo(
         const menuItems = [
             {
                 icon: "gear",
-                label: "Settings",
-                hasError: hasConfigErrors,
+                label: t("workspace.settings"),
                 onClick: () => {
                     const blockDef: BlockDef = {
                         meta: {
                             view: "waveconfig",
                         },
                     };
-                    env.createBlock(blockDef, false, true);
+                    createBlock(blockDef, false, true);
                     onClose();
                 },
             },
             {
                 icon: "lightbulb",
-                label: "Tips",
+                label: t("workspace.tips"),
                 onClick: () => {
                     const blockDef: BlockDef = {
                         meta: {
                             view: "tips",
                         },
                     };
-                    env.createBlock(blockDef, true, true);
+                    createBlock(blockDef, true, true);
                     onClose();
                 },
             },
             {
                 icon: "lock",
-                label: "Secrets",
+                label: t("workspace.secrets"),
                 onClick: () => {
                     const blockDef: BlockDef = {
                         meta: {
@@ -310,28 +266,20 @@ const SettingsFloatingWindow = memo(
                             file: "secrets",
                         },
                     };
-                    env.createBlock(blockDef, false, true);
-                    onClose();
-                },
-            },
-            {
-                icon: "book-open",
-                label: "Release Notes",
-                onClick: () => {
-                    modalsModel.pushModal("UpgradeOnboardingPatch", { isReleaseNotes: true });
+                    createBlock(blockDef, false, true);
                     onClose();
                 },
             },
             {
                 icon: "circle-question",
-                label: "Help",
+                label: t("workspace.help"),
                 onClick: () => {
                     const blockDef: BlockDef = {
                         meta: {
                             view: "help",
                         },
                     };
-                    env.createBlock(blockDef);
+                    createBlock(blockDef);
                     onClose();
                 },
             },
@@ -355,9 +303,6 @@ const SettingsFloatingWindow = memo(
                                 <i className={makeIconClass(item.icon, false)}></i>
                             </div>
                             <div className="text-sm whitespace-nowrap">{item.label}</div>
-                            {item.hasError && (
-                                <i className="fa fa-solid fa-circle-exclamation text-error text-[14px] ml-auto"></i>
-                            )}
                         </div>
                     ))}
                 </div>
@@ -369,19 +314,17 @@ const SettingsFloatingWindow = memo(
 SettingsFloatingWindow.displayName = "SettingsFloatingWindow";
 
 const Widgets = memo(() => {
-    const env = useWaveEnv<WidgetsEnv>();
-    const fullConfig = useAtomValue(env.atoms.fullConfigAtom);
-    const hasConfigErrors = useAtomValue(env.atoms.hasConfigErrors);
-    const workspaceId = useAtomValue(env.atoms.workspaceId);
+    const fullConfig = useAtomValue(atoms.fullConfigAtom);
+    const hasCustomAIPresets = useAtomValue(atoms.hasCustomAIPresetsAtom);
     const [mode, setMode] = useState<"normal" | "compact" | "supercompact">("normal");
     const containerRef = useRef<HTMLDivElement>(null);
     const measurementRef = useRef<HTMLDivElement>(null);
 
     const featureWaveAppBuilder = fullConfig?.settings?.["feature:waveappbuilder"] ?? false;
     const widgetsMap = fullConfig?.widgets ?? {};
-    const filteredWidgets = Object.fromEntries(
-        Object.entries(widgetsMap).filter(([_key, widget]) => shouldIncludeWidgetForWorkspace(widget, workspaceId))
-    );
+    const filteredWidgets = hasCustomAIPresets
+        ? widgetsMap
+        : Object.fromEntries(Object.entries(widgetsMap).filter(([key]) => key !== "defwidget@ai"));
     const widgets = sortByDisplayOrder(filteredWidgets);
 
     const [isAppsOpen, setIsAppsOpen] = useState(false);
@@ -438,7 +381,7 @@ const Widgets = memo(() => {
         e.preventDefault();
         const menu: ContextMenuItem[] = [
             {
-                label: "Edit widgets.json",
+                label: t("workspace.editWidgetsJson"),
                 click: () => {
                     fireAndForget(async () => {
                         const blockDef: BlockDef = {
@@ -447,37 +390,37 @@ const Widgets = memo(() => {
                                 file: "widgets.json",
                             },
                         };
-                        await env.createBlock(blockDef, false, true);
+                        await createBlock(blockDef, false, true);
                     });
                 },
             },
         ];
-        env.showContextMenu(menu, e);
+        ContextMenuModel.showContextMenu(menu, e);
     };
 
     return (
         <>
             <div
                 ref={containerRef}
-                className="flex flex-col w-12 overflow-hidden py-1 -ml-1 select-none shrink-0"
+                className="flex flex-col w-12 overflow-hidden py-1 -ml-1 select-none"
                 onContextMenu={handleWidgetsBarContextMenu}
             >
                 {mode === "supercompact" ? (
                     <>
                         <div className="grid grid-cols-2 gap-0 w-full">
                             {widgets?.map((data, idx) => (
-                                <Widget key={`widget-${idx}`} widget={data} mode={mode} env={env} />
+                                <Widget key={`widget-${idx}`} widget={data} mode={mode} />
                             ))}
                         </div>
                         <div className="flex-grow" />
                         <div className="grid grid-cols-2 gap-0 w-full">
-                            {env.isDev() || featureWaveAppBuilder ? (
+                            {isDev() || featureWaveAppBuilder ? (
                                 <div
                                     ref={appsButtonRef}
                                     className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary text-sm overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
                                     onClick={() => setIsAppsOpen(!isAppsOpen)}
                                 >
-                                    <Tooltip content="Local WaveApps" placement="left" disable={isAppsOpen}>
+                                    <Tooltip content={t("workspace.localWaveApps")} placement="left" disable={isAppsOpen}>
                                         <div>
                                             <i className={makeIconClass("cube", true)}></i>
                                         </div>
@@ -489,16 +432,9 @@ const Widgets = memo(() => {
                                 className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary text-sm overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
                                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                             >
-                                <Tooltip
-                                    content={<SettingsTooltipContent hasConfigErrors={hasConfigErrors} />}
-                                    placement="left"
-                                    disable={isSettingsOpen}
-                                >
-                                    <div className="relative">
+                                <Tooltip content={t("workspace.settingsAndHelp")} placement="left" disable={isSettingsOpen}>
+                                    <div>
                                         <i className={makeIconClass("gear", true)}></i>
-                                        {hasConfigErrors && (
-                                            <i className="fa fa-solid fa-circle-exclamation text-error absolute top-0 right-0 text-[10px] pointer-events-none"></i>
-                                        )}
                                     </div>
                                 </Tooltip>
                             </div>
@@ -507,23 +443,23 @@ const Widgets = memo(() => {
                 ) : (
                     <>
                         {widgets?.map((data, idx) => (
-                            <Widget key={`widget-${idx}`} widget={data} mode={mode} env={env} />
+                            <Widget key={`widget-${idx}`} widget={data} mode={mode} />
                         ))}
                         <div className="flex-grow" />
-                        {env.isDev() || featureWaveAppBuilder ? (
+                        {isDev() || featureWaveAppBuilder ? (
                             <div
                                 ref={appsButtonRef}
                                 className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary text-lg overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
                                 onClick={() => setIsAppsOpen(!isAppsOpen)}
                             >
-                                <Tooltip content="Local WaveApps" placement="left" disable={isAppsOpen}>
+                                    <Tooltip content={t("workspace.localWaveApps")} placement="left" disable={isAppsOpen}>
                                     <div className="flex flex-col items-center w-full">
                                         <div>
                                             <i className={makeIconClass("cube", true)}></i>
                                         </div>
                                         {mode === "normal" && (
                                             <div className="text-xxs mt-0.5 w-full px-0.5 text-center whitespace-nowrap overflow-hidden text-ellipsis">
-                                                apps
+                                                {t("workspace.apps")}
                                             </div>
                                         )}
                                     </div>
@@ -535,40 +471,24 @@ const Widgets = memo(() => {
                             className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary text-lg overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
                             onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                         >
-                            <Tooltip
-                                content={<SettingsTooltipContent hasConfigErrors={hasConfigErrors} />}
-                                placement="left"
-                                disable={isSettingsOpen}
-                            >
-                                <div className="flex flex-col items-center w-full">
-                                    <div className="relative">
-                                        <i className={makeIconClass("gear", true)}></i>
-                                        {hasConfigErrors && (
-                                            <i
-                                                className={`fa fa-solid fa-circle-exclamation text-error absolute top-0 right-[-4px] pointer-events-none ${mode === "normal" ? "text-[14px]" : "text-[12px]"}`}
-                                            ></i>
-                                        )}
-                                    </div>
-                                    {mode === "normal" && (
-                                        <div className="text-xxs mt-0.5 w-full px-0.5 text-center whitespace-nowrap overflow-hidden text-ellipsis">
-                                            settings
-                                        </div>
-                                    )}
+                            <Tooltip content={t("workspace.settingsAndHelp")} placement="left" disable={isSettingsOpen}>
+                                <div>
+                                    <i className={makeIconClass("gear", true)}></i>
                                 </div>
                             </Tooltip>
                         </div>
                     </>
                 )}
-                {env.isDev() ? (
+                {isDev() ? (
                     <div
                         className="flex justify-center items-center w-full py-1 text-accent text-[30px]"
-                        title="Running Wave Dev Build"
+                        title={t("workspace.runningDevBuild")}
                     >
                         <i className="fa fa-brands fa-dev fa-fw" />
                     </div>
                 ) : null}
             </div>
-            {(env.isDev() || featureWaveAppBuilder) && appsButtonRef.current && (
+            {(isDev() || featureWaveAppBuilder) && appsButtonRef.current && (
                 <AppsFloatingWindow
                     isOpen={isAppsOpen}
                     onClose={() => setIsAppsOpen(false)}
@@ -580,7 +500,6 @@ const Widgets = memo(() => {
                     isOpen={isSettingsOpen}
                     onClose={() => setIsSettingsOpen(false)}
                     referenceElement={settingsButtonRef.current}
-                    hasConfigErrors={hasConfigErrors}
                 />
             )}
 
@@ -589,27 +508,27 @@ const Widgets = memo(() => {
                 className="flex flex-col w-12 py-1 -ml-1 select-none absolute -z-10 opacity-0 pointer-events-none"
             >
                 {widgets?.map((data, idx) => (
-                    <Widget key={`measurement-widget-${idx}`} widget={data} mode="normal" env={env} />
+                    <Widget key={`measurement-widget-${idx}`} widget={data} mode="normal" />
                 ))}
                 <div className="flex-grow" />
                 <div className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-lg">
                     <div>
                         <i className={makeIconClass("gear", true)}></i>
                     </div>
-                    <div className="text-xxs mt-0.5 w-full px-0.5 text-center">settings</div>
+                    <div className="text-xxs mt-0.5 w-full px-0.5 text-center">{t("workspace.settingsLower")}</div>
                 </div>
-                {env.isDev() ? (
+                {isDev() ? (
                     <div className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-lg">
                         <div>
                             <i className={makeIconClass("cube", true)}></i>
                         </div>
-                        <div className="text-xxs mt-0.5 w-full px-0.5 text-center">apps</div>
+                        <div className="text-xxs mt-0.5 w-full px-0.5 text-center">{t("workspace.apps")}</div>
                     </div>
                 ) : null}
-                {env.isDev() ? (
+                {isDev() ? (
                     <div
                         className="flex justify-center items-center w-full py-1 text-accent text-[30px]"
-                        title="Running Wave Dev Build"
+                        title={t("workspace.runningDevBuild")}
                     >
                         <i className="fa fa-brands fa-dev fa-fw" />
                     </div>

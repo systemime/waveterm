@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="18" failures="0" errors="0" time="0.054827714">
+    <testsuite name="frontend/layout/tests/layoutNode.test.ts" timestamp="2026-04-13T07:06:13.009Z" hostname="VM-0-2-debian" tests="14" failures="0" errors="0" skipped="0" time="0.021551028">
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="newLayoutNode" time="0.007646207">
+            <system-err>
+Either children or data must be defined for node, not both
+Either children or data must be defined for node, not both
+Node cannot define an empty array of children
+
+            </system-err>
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="addIntermediateNode" time="0.000549655">
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="addChildAt - same flexDirection, no children" time="0.002007861">
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="addChildAt - different flexDirection, no children" time="0.001004392">
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="addChildAt - same flexDirection, first node has children, second doesn&apos;t" time="0.000811949">
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="addChildAt - different flexDirection, first node has children, second doesn&apos;t" time="0.000841384">
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="addChildAt - same flexDirection, first node has children, second has children" time="0.000660093">
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="addChildAt - different flexDirection, first node has children, second has children" time="0.000240343">
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="balanceNode - corrects flex directions" time="0.001248861">
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="balanceNode - collapses nodes with single grandchild 1" time="0.000237948">
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="balanceNode - collapses nodes with single grandchild 2" time="0.000203042">
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="balanceNode - collapses nodes with single grandchild 3" time="0.000300736">
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="balanceNode - collapses nodes with single grandchild 4" time="0.001693459">
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutNode.test.ts" name="findNextInsertLocation" time="0.001774371">
+        </testcase>
+    </testsuite>
+    <testsuite name="frontend/layout/tests/layoutTree.test.ts" timestamp="2026-04-13T07:06:13.018Z" hostname="VM-0-2-debian" tests="2" failures="0" errors="0" skipped="0" time="0.023528271">
+        <testcase classname="frontend/layout/tests/layoutTree.test.ts" name="layoutTreeStateReducer - compute move" time="0.021743631">
+            <system-out>
+moveNode {
+  rootNode: {
+    id: &apos;910834e7-34b5-4a91-905a-495bc70f3c87&apos;,
+    flexDirection: &apos;row&apos;,
+    size: 10,
+    children: [ [Object], [Object] ],
+    data: undefined
+  },
+  pendingBackendActions: []
+} {
+  type: &apos;move&apos;,
+  parentId: &apos;910834e7-34b5-4a91-905a-495bc70f3c87&apos;,
+  index: 2,
+  node: {
+    id: &apos;f60d3922-30a1-4b3f-b75e-007690092e21&apos;,
+    flexDirection: &apos;row&apos;,
+    size: 10,
+    children: undefined,
+    data: { blockId: &apos;node1&apos; }
+  }
+}
+moveNode {
+  rootNode: {
+    id: &apos;910834e7-34b5-4a91-905a-495bc70f3c87&apos;,
+    flexDirection: &apos;row&apos;,
+    size: 10,
+    children: [ [Object], [Object] ],
+    data: undefined
+  },
+  pendingBackendActions: []
+} {
+  type: &apos;move&apos;,
+  parentId: &apos;0e03ff08-06f2-459d-989b-82856c451ef9&apos;,
+  index: 1,
+  node: {
+    id: &apos;f60d3922-30a1-4b3f-b75e-007690092e21&apos;,
+    flexDirection: &apos;column&apos;,
+    size: 10,
+    children: undefined,
+    data: { blockId: &apos;node1&apos; }
+  }
+}
+
+            </system-out>
+        </testcase>
+        <testcase classname="frontend/layout/tests/layoutTree.test.ts" name="computeMove - noop action" time="0.000291849">
+        </testcase>
+    </testsuite>
+    <testsuite name="frontend/layout/tests/utils.test.ts" timestamp="2026-04-13T07:06:13.023Z" hostname="VM-0-2-debian" tests="2" failures="0" errors="0" skipped="0" time="0.009748415">
+        <testcase classname="frontend/layout/tests/utils.test.ts" name="determineDropDirection" time="0.001795952">
+        </testcase>
+        <testcase classname="frontend/layout/tests/utils.test.ts" name="reverseFlexDirection" time="0.000258607">
+        </testcase>
+    </testsuite>
+</testsuites>

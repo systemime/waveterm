@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { WaveStreamdown } from "@/app/element/streamdown";
+import { t } from "@/util/i18n";
 import { cn } from "@/util/util";
 import { memo, useEffect, useRef } from "react";
 import { getFileIcon } from "./ai-utils";
@@ -12,7 +13,7 @@ import { WaveAIModel } from "./waveai-model";
 
 const AIThinking = memo(
     ({
-        message = "AI is thinking...",
+        message = t("aiPanel.aiThinking"),
         reasoningText,
         isWaitingApproval = false,
     }: {
@@ -76,7 +77,7 @@ const UserMessageFiles = memo(({ fileParts }: UserMessageFilesProps) => {
                                 {file.data?.previewurl ? (
                                     <img
                                         src={file.data.previewurl}
-                                        alt={file.data?.filename || "File"}
+                                        alt={file.data?.filename || t("aiPanel.file")}
                                         className="w-full h-full object-cover"
                                     />
                                 ) : (
@@ -90,9 +91,9 @@ const UserMessageFiles = memo(({ fileParts }: UserMessageFilesProps) => {
                             </div>
                             <div
                                 className="text-[10px] text-gray-200 truncate w-full max-w-16"
-                                title={file.data?.filename || "File"}
+                                title={file.data?.filename || t("aiPanel.file")}
                             >
-                                {file.data?.filename || "File"}
+                                {file.data?.filename || t("aiPanel.file")}
                             </div>
                         </div>
                     </div>
@@ -190,14 +191,14 @@ const getThinkingMessage = (
     );
 
     if (hasPendingApprovals) {
-        return { message: "Waiting for Tool Approvals...", isWaitingApproval: true };
+        return { message: t("aiPanel.waitingForToolApprovals"), isWaitingApproval: true };
     }
 
     const lastPart = parts[parts.length - 1];
 
     if (lastPart?.type === "reasoning") {
         const reasoningContent = lastPart.text || "";
-        return { message: "AI is thinking...", reasoningText: reasoningContent };
+        return { message: t("aiPanel.aiThinking"), reasoningText: reasoningContent };
     }
 
     if (lastPart?.type === "text" && lastPart.text) {
@@ -228,7 +229,7 @@ export const AIMessage = memo(({ message, isStreaming }: AIMessageProps) => {
                 )}
             >
                 {displayParts.length === 0 && !isStreaming && !thinkingData ? (
-                    <div className="whitespace-pre-wrap break-words">(no text content)</div>
+                    <div className="whitespace-pre-wrap break-words">{t("aiPanel.noTextContent")}</div>
                 ) : (
                     <>
                         {groupedParts.map((group, index: number) =>

@@ -10,7 +10,6 @@ import {
 import { FocusManager } from "@/app/store/focusManager";
 import { atoms, createBlock, getOrefMetaKeyAtom, getSettingsKeyAtom } from "@/app/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
-import { isBuilderWindow } from "@/app/store/windowtype";
 import * as WOS from "@/app/store/wos";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
@@ -151,15 +150,17 @@ export class WaveAIModel {
 
     static getInstance(): WaveAIModel {
         if (!WaveAIModel.instance) {
+            const windowType = globalStore.get(atoms.waveWindowType);
             let orefContext: ORef;
-            if (isBuilderWindow()) {
+            const inBuilder = windowType === "builder";
+            if (inBuilder) {
                 const builderId = globalStore.get(atoms.builderId);
                 orefContext = WOS.makeORef("builder", builderId);
             } else {
                 const tabId = globalStore.get(atoms.staticTabId);
                 orefContext = WOS.makeORef("tab", tabId);
             }
-            WaveAIModel.instance = new WaveAIModel(orefContext, isBuilderWindow());
+            WaveAIModel.instance = new WaveAIModel(orefContext, inBuilder);
             (window as any).WaveAIModel = WaveAIModel.instance;
         }
         return WaveAIModel.instance;

@@ -231,9 +231,8 @@ func RunGeminiChatStep(
 		return nil, nil, nil, err
 	}
 
-	httpClient, err := aiutil.MakeHTTPClient(chatOpts.Config.ProxyURL)
-	if err != nil {
-		return nil, nil, nil, err
+	httpClient := &http.Client{
+		Timeout: 0, // rely on ctx; streaming can be long
 	}
 
 	resp, err := httpClient.Do(req)

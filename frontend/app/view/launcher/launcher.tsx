@@ -1,10 +1,11 @@
-// Copyright 2026, Command Line Inc.
+// Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import logoUrl from "@/app/asset/logo.svg?url";
 import type { BlockNodeModel } from "@/app/block/blocktypes";
-import { atoms, globalStore, replaceBlock } from "@/app/store/global";
 import type { TabModel } from "@/app/store/tab-model";
+import logoUrl from "@/app/asset/logo.svg?url";
+import { atoms, globalStore, replaceBlock } from "@/app/store/global";
+import { t } from "@/util/i18n";
 import { checkKeyPressed, keydownWrapper } from "@/util/keyutil";
 import { isBlank, makeIconClass } from "@/util/util";
 import clsx from "clsx";
@@ -26,7 +27,7 @@ export class LauncherViewModel implements ViewModel {
     tabModel: TabModel;
     viewType = "launcher";
     viewIcon = atom("shapes");
-    viewName = atom("Widget Launcher");
+    viewName = atom(t("launcher.viewName"));
     viewComponent = LauncherView;
     noHeader = atom(true);
     inputRef = { current: null } as React.RefObject<HTMLInputElement>;
@@ -35,7 +36,7 @@ export class LauncherViewModel implements ViewModel {
     containerSize = atom({ width: 0, height: 0 });
     gridLayout: GridLayoutType = null;
 
-    constructor({ blockId, nodeModel, tabModel }: ViewModelInitType) {
+    constructor(blockId: string, nodeModel: BlockNodeModel, tabModel: TabModel) {
         this.blockId = blockId;
         this.nodeModel = nodeModel;
         this.tabModel = tabModel;
@@ -219,13 +220,17 @@ function LauncherView({ blockId, model }: ViewComponentProps<LauncherViewModel>)
                 onKeyDown={keydownWrapper(model.keyDownHandler.bind(model))}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="sr-only dummy"
-                aria-label="Search widgets"
+                aria-label={t("launcher.searchWidgets")}
             />
 
             {/* Logo */}
             {showLogo && (
                 <div className="mb-6" style={{ width: logoWidth, maxWidth: 300 }}>
-                    <img src={logoUrl} className="w-full h-auto filter grayscale brightness-70 opacity-70" alt="Logo" />
+                    <img
+                        src={logoUrl}
+                        className="w-full h-auto filter grayscale brightness-70 opacity-70"
+                        alt={t("launcher.logoAlt")}
+                    />
                 </div>
             )}
 
@@ -272,11 +277,15 @@ function LauncherView({ blockId, model }: ViewComponentProps<LauncherViewModel>)
             {/* Search instructions */}
             <div className="mt-4 text-secondary text-xs">
                 {filteredWidgets.length === 0 ? (
-                    <span>No widgets found. Press Escape to clear search.</span>
+                    <span>{t("launcher.noWidgetsFound")}</span>
                 ) : (
                     <span>
-                        {searchTerm == "" ? "Type to Filter" : "Searching " + '"' + searchTerm + '"'}, Enter to Launch,
-                        {searchTerm == "" ? "Arrow Keys to Navigate" : null}
+                        {searchTerm == ""
+                            ? t("launcher.typeToFilter")
+                            : t("launcher.searchingFor", { term: searchTerm })}
+                        {", "}
+                        {t("launcher.enterToLaunch")}
+                        {searchTerm == "" ? `, ${t("launcher.arrowKeysToNavigate")}` : null}
                     </span>
                 )}
             </div>

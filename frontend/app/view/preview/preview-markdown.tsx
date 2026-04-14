@@ -1,9 +1,8 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { globalStore } from "@/app/store/jotaiStore";
 import { Markdown } from "@/element/markdown";
-import { getOverrideConfigAtom } from "@/store/global";
+import { getOverrideConfigAtom, globalStore } from "@/store/global";
 import { useAtomValue } from "jotai";
 import { useEffect, useMemo } from "react";
 import type { SpecializedViewProps } from "./preview";

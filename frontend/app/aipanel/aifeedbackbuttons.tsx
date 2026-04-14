@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { cn, makeIconClass } from "@/util/util";
+import { t } from "@/util/i18n";
 import { memo, useState } from "react";
 import { WaveAIModel } from "./waveai-model";
 
@@ -50,7 +51,7 @@ export const AIFeedbackButtons = memo(({ messageText }: AIFeedbackButtonsProps) 
                         ? "text-accent"
                         : "text-secondary hover:bg-zinc-700 hover:text-primary"
                 )}
-                title="Good Response"
+                title={t("aiPanel.goodResponse")}
             >
                 <i className={makeIconClass(thumbsUpClicked ? "solid@thumbs-up" : "regular@thumbs-up", false)} />
             </button>
@@ -62,7 +63,7 @@ export const AIFeedbackButtons = memo(({ messageText }: AIFeedbackButtonsProps) 
                         ? "text-accent"
                         : "text-secondary hover:bg-zinc-700 hover:text-primary"
                 )}
-                title="Bad Response"
+                title={t("aiPanel.badResponse")}
             >
                 <i className={makeIconClass(thumbsDownClicked ? "solid@thumbs-down" : "regular@thumbs-down", false)} />
             </button>
@@ -75,7 +76,7 @@ export const AIFeedbackButtons = memo(({ messageText }: AIFeedbackButtonsProps) 
                             ? "text-success"
                             : "text-secondary hover:bg-zinc-700 hover:text-primary"
                     )}
-                    title="Copy Message"
+                    title={t("aiPanel.copyMessage")}
                 >
                     <i className={makeIconClass(copied ? "solid@check" : "regular@copy", false)} />
                 </button>

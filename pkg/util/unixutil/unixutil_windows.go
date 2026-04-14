@@ -40,11 +40,3 @@ func SignalTerm(pid int) error {
 func SignalHup(pid int) error {
 	return nil
 }
-
-func IsPidRunning(pid int) bool {
-	return false
-}
-
-func SendSignalByName(pid int, sigName string) error {
-	return fmt.Errorf("sending signals is not supported on Windows")
-}

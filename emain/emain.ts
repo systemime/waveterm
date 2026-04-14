@@ -46,10 +46,8 @@ import {
     createNewWaveWindow,
     focusedWaveWindow,
     getAllWaveWindows,
-    getQuakeWindow,
     getWaveWindowById,
     getWaveWindowByWorkspaceId,
-    initGlobalHotkeyEventSubscription,
     registerGlobalHotkey,
     relaunchBrowserWindows,
     WaveBrowserWindow,
@@ -386,10 +384,6 @@ async function appMain() {
         electronApp.quit();
         return;
     }
-    electronApp.on("second-instance", (_event, argv, workingDirectory) => {
-        console.log("second-instance event, argv:", argv, "workingDirectory:", workingDirectory);
-        fireAndForget(createNewWaveWindow);
-    });
     try {
         await runWaveSrv(handleWSEvent);
     } catch (e) {
@@ -429,16 +423,6 @@ async function appMain() {
 
     electronApp.on("activate", () => {
         const allWindows = getAllWaveWindows();
-        const anyVisible = allWindows.some((w) => !w.isDestroyed() && w.isVisible());
-        if (anyVisible) {
-            return;
-        }
-        const qw = getQuakeWindow();
-        if (qw != null && !qw.isDestroyed()) {
-            qw.show();
-            qw.focus();
-            return;
-        }
         if (allWindows.length === 0) {
             fireAndForget(createNewWaveWindow);
         }
@@ -457,7 +441,6 @@ async function appMain() {
     if (rawGlobalHotKey) {
         registerGlobalHotkey(rawGlobalHotKey);
     }
-    initGlobalHotkeyEventSubscription();
 }
 
 appMain().catch((e) => {

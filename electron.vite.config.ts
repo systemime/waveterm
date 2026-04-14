@@ -83,7 +83,6 @@ export default defineConfig({
                 },
             },
             outDir: "dist/main",
-            externalizeDeps: false,
         },
         plugins: [tsconfigPaths()],
         resolve: {
@@ -114,7 +113,6 @@ export default defineConfig({
                 },
             },
             outDir: "dist/preload",
-            externalizeDeps: false,
         },
         server: {
             open: false,
@@ -159,9 +157,8 @@ export default defineConfig({
                     "**/go.mod",
                     "**/go.sum",
                     "**/*.md",
-                    "**/*.mdx",
                     "**/*.json",
-                    "**/emain/**",
+                    "emain/**",
                     "**/*.txt",
                     "**/*.log",
                 ],

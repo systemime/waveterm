@@ -19,7 +19,6 @@ import (
 	"github.com/wavetermdev/waveterm/pkg/jobcontroller"
 	"github.com/wavetermdev/waveterm/pkg/remote"
 	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/util/ds"
 	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
 	"github.com/wavetermdev/waveterm/pkg/wavebase"
 	"github.com/wavetermdev/waveterm/pkg/waveobj"
@@ -42,7 +41,7 @@ const (
 )
 
 const (
-	DefaultTermMaxFileSize = 2 * 1024 * 1024
+	DefaultTermMaxFileSize = 256 * 1024
 	DefaultHtmlMaxFileSize = 256 * 1024
 	MaxInitScriptSize      = 50 * 1024
 )
@@ -76,16 +75,9 @@ type Controller interface {
 
 // Registry for all controllers
 var (
-	controllerRegistry  = make(map[string]Controller)
-	registryLock        sync.RWMutex
-	blockResyncMutexMap = ds.MakeSyncMap[*sync.Mutex]()
+	controllerRegistry = make(map[string]Controller)
+	registryLock       sync.RWMutex
 )
-
-func getBlockResyncMutex(blockId string) *sync.Mutex {
-	return blockResyncMutexMap.GetOrCreate(blockId, func() *sync.Mutex {
-		return &sync.Mutex{}
-	})
-}
 
 // Registry operations
 func getController(blockId string) Controller {
@@ -152,10 +144,6 @@ func ResyncController(ctx context.Context, tabId string, blockId string, rtOpts 
 	if tabId == "" || blockId == "" {
 		return fmt.Errorf("invalid tabId or blockId passed to ResyncController")
 	}
-
-	mu := getBlockResyncMutex(blockId)
-	mu.Lock()
-	defer mu.Unlock()
 
 	blockData, err := wstore.DBMustGet[*waveobj.Block](ctx, blockId)
 	if err != nil {

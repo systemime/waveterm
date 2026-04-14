@@ -7,8 +7,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"regexp"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -187,36 +185,14 @@ func GetWorkspace(ctx context.Context, wsID string) (*waveobj.Workspace, error) 
 	return wstore.DBMustGet[*waveobj.Workspace](ctx, wsID)
 }
 
-func getTabBackground() string {
-	config := wconfig.GetWatcher().GetFullConfig()
-	if config.Settings.TabBackground != "" {
-		return config.Settings.TabBackground
+func getTabPresetMeta() (waveobj.MetaMapType, error) {
+	settings := wconfig.GetWatcher().GetFullConfig()
+	tabPreset := settings.Settings.TabPreset
+	if tabPreset == "" {
+		return nil, nil
 	}
-	return config.Settings.TabPreset
-}
-
-var tabNameRe = regexp.MustCompile(`^T(\d+)$`)
-
-// getNextTabName returns the next auto-generated tab name (e.g. "T3") given a
-// slice of existing tab names. It filters to names matching T[N] where N is a
-// positive integer, finds the maximum N, and returns T[max+1]. If no matching
-// names exist it returns "T1".
-func getNextTabName(tabNames []string) string {
-	maxNum := 0
-	for _, name := range tabNames {
-		m := tabNameRe.FindStringSubmatch(name)
-		if m == nil {
-			continue
-		}
-		n, err := strconv.Atoi(m[1])
-		if err != nil || n <= 0 {
-			continue
-		}
-		if n > maxNum {
-			maxNum = n
-		}
-	}
-	return "T" + strconv.Itoa(maxNum+1)
+	presetMeta := settings.Presets[tabPreset]
+	return presetMeta, nil
 }
 
 // returns tabid
@@ -226,15 +202,7 @@ func CreateTab(ctx context.Context, workspaceId string, tabName string, activate
 		if err != nil {
 			return "", fmt.Errorf("workspace %s not found: %w", workspaceId, err)
 		}
-		tabNames := make([]string, 0, len(ws.TabIds))
-		for _, tabId := range ws.TabIds {
-			tab, err := wstore.DBMustGet[*waveobj.Tab](ctx, tabId)
-			if err != nil || tab == nil {
-				continue
-			}
-			tabNames = append(tabNames, tab.Name)
-		}
-		tabName = getNextTabName(tabNames)
+		tabName = "T" + fmt.Sprint(len(ws.TabIds)+1)
 	}
 
 	tab, err := createTabObj(ctx, workspaceId, tabName, nil)
@@ -254,10 +222,12 @@ func CreateTab(ctx context.Context, workspaceId string, tabName string, activate
 		if err != nil {
 			return tab.OID, fmt.Errorf("error applying new tab layout: %w", err)
 		}
-		tabBg := getTabBackground()
-		if tabBg != "" {
+		presetMeta, presetErr := getTabPresetMeta()
+		if presetErr != nil {
+			log.Printf("error getting tab preset meta: %v\n", presetErr)
+		} else if len(presetMeta) > 0 {
 			tabORef := waveobj.ORefFromWaveObj(tab)
-			wstore.UpdateObjectMeta(ctx, *tabORef, waveobj.MetaMapType{waveobj.MetaKey_TabBackground: tabBg}, false)
+			wstore.UpdateObjectMeta(ctx, *tabORef, presetMeta, true)
 		}
 	}
 	telemetry.GoUpdateActivityWrap(wshrpc.ActivityUpdate{NewTab: 1}, "createtab")

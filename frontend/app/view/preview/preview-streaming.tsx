@@ -3,8 +3,9 @@
 
 import { Button } from "@/app/element/button";
 import { CenteredDiv } from "@/app/element/quickelems";
-import { globalStore } from "@/app/store/jotaiStore";
+import { globalStore } from "@/store/global";
 import { getWebServerEndpoint } from "@/util/endpoints";
+import { t } from "@/util/i18n";
 import { formatRemoteUri } from "@/util/waveutil";
 import { useAtomValue } from "jotai";
 import { useEffect } from "react";
@@ -16,13 +17,13 @@ function ImageZoomControls() {
 
     return (
         <div className="absolute flex flex-row z-[2] top-0 right-0 p-[5px] gap-1">
-            <Button onClick={() => zoomIn()} title="Zoom In" className="py-1 px-[5px]">
+            <Button onClick={() => zoomIn()} title={t("preview.zoomIn")} className="py-1 px-[5px]">
                 <i className="fa-sharp fa-plus" />
             </Button>
-            <Button onClick={() => zoomOut()} title="Zoom Out" className="py-1 px-[5px]">
+            <Button onClick={() => zoomOut()} title={t("preview.zoomOut")} className="py-1 px-[5px]">
                 <i className="fa-sharp fa-minus" />
             </Button>
-            <Button onClick={() => resetTransform()} title="Reset Zoom" className="py-1 px-[5px]">
+            <Button onClick={() => resetTransform()} title={t("preview.resetZoom")} className="py-1 px-[5px]">
                 <i className="fa-sharp fa-rotate-left" />
             </Button>
         </div>
@@ -72,21 +73,25 @@ function StreamingPreview({ model }: SpecializedViewProps) {
     if (fileInfo.mimetype.startsWith("video/")) {
         return (
             <div className="flex flex-row h-full overflow-hidden items-center justify-center">
-                <video controls src={streamingUrl} className="w-full h-full p-[10px] object-contain" />
+                <video controls className="w-full h-full p-[10px] object-contain">
+                    <source src={streamingUrl} />
+                </video>
             </div>
         );
     }
     if (fileInfo.mimetype.startsWith("audio/")) {
         return (
             <div className="flex flex-row h-full overflow-hidden items-center justify-center">
-                <audio controls src={streamingUrl} className="w-full h-full p-[10px] object-contain" />
+                <audio controls className="w-full h-full p-[10px] object-contain">
+                    <source src={streamingUrl} />
+                </audio>
             </div>
         );
     }
     if (fileInfo.mimetype.startsWith("image/")) {
         return <StreamingImagePreview url={streamingUrl} />;
     }
-    return <CenteredDiv>Preview Not Supported</CenteredDiv>;
+    return <CenteredDiv>{t("preview.notSupported")}</CenteredDiv>;
 }
 
 export { StreamingPreview };

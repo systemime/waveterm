@@ -14,6 +14,7 @@ import Papa from "papaparse";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useDimensionsWithExistingRef } from "@/app/hook/useDimensions";
+import { t } from "@/util/i18n";
 import "./csvview.scss";
 
 const MAX_DATA_SIZE = 10 * 1024 * 1024; // 10MB in bytes
@@ -76,7 +77,9 @@ const CSVView = ({ parentRef, filename, content }: CSVViewProps) => {
         // Check for non-header CSVs
         if (!hasHeaders && Array.isArray(results.data) && Array.isArray(results.data[0])) {
             const dataArray = results.data as string[][]; // Asserting the type
-            const headers = Array.from({ length: dataArray[0].length }, (_, i) => `Column ${i + 1}`);
+            const headers = Array.from({ length: dataArray[0].length }, (_, i) =>
+                t("preview.csv.column", { index: i + 1 })
+            );
             results.data = dataArray.map((row) => {
                 const newRow: CSVRow = {};
                 row.forEach((value, index) => {

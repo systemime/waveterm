@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as jotai from "jotai";
-import { globalStore } from "./jotaiStore";
+import { globalStore } from "./global";
 
 class ModalsModel {
     modalsAtom: jotai.PrimitiveAtom<Array<{ displayName: string; props?: any }>>;

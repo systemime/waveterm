@@ -6,7 +6,7 @@
 
 type PathType = (string | number)[];
 
-const simplePathStrRe = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+var simplePathStrRe = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 function formatPath(path: PathType): string {
     if (path.length == 0) {

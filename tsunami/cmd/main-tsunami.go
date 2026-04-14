@@ -41,22 +41,14 @@ func validateEnvironmentVars(opts *build.BuildOpts) error {
 	if scaffoldPath == "" {
 		return fmt.Errorf("%s environment variable must be set", EnvTsunamiScaffoldPath)
 	}
-	absScaffoldPath, err := filepath.Abs(scaffoldPath)
-	if err != nil {
-		return fmt.Errorf("failed to resolve %s to absolute path: %w", EnvTsunamiScaffoldPath, err)
-	}
 
 	sdkReplacePath := os.Getenv(EnvTsunamiSdkReplacePath)
 	if sdkReplacePath == "" {
 		return fmt.Errorf("%s environment variable must be set", EnvTsunamiSdkReplacePath)
 	}
-	absSdkReplacePath, err := filepath.Abs(sdkReplacePath)
-	if err != nil {
-		return fmt.Errorf("failed to resolve %s to absolute path: %w", EnvTsunamiSdkReplacePath, err)
-	}
 
-	opts.ScaffoldPath = absScaffoldPath
-	opts.SdkReplacePath = absSdkReplacePath
+	opts.ScaffoldPath = scaffoldPath
+	opts.SdkReplacePath = sdkReplacePath
 
 	// NodePath is optional
 	if nodePath := os.Getenv(EnvTsunamiNodePath); nodePath != "" {

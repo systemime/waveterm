@@ -1,16 +1,18 @@
-// Copyright 2026, Command Line Inc.
+// Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 import { BlockNodeModel } from "@/app/block/blocktypes";
-import { globalStore } from "@/app/store/jotaiStore";
 import type { TabModel } from "@/app/store/tab-model";
-import { makeORef } from "@/app/store/wos";
+import { getApi, getBlockMetaKeyAtom, WOS } from "@/app/store/global";
+import { globalStore } from "@/app/store/jotaiStore";
+import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { SecretsContent } from "@/app/view/waveconfig/secretscontent";
 import { WaveConfigView } from "@/app/view/waveconfig/waveconfig";
-import type { WaveConfigEnv } from "@/app/view/waveconfig/waveconfigenv";
+import { t } from "@/util/i18n";
+import { isWindows } from "@/util/platformutil";
 import { base64ToString, stringToBase64 } from "@/util/util";
-import { atom, type Atom, type PrimitiveAtom } from "jotai";
+import { atom, type PrimitiveAtom } from "jotai";
 import type * as MonacoTypes from "monaco-editor";
 import * as React from "react";
 
@@ -32,11 +34,21 @@ export type ConfigFile = {
 
 export const SecretNameRegex = /^[A-Za-z][A-Za-z0-9_]*$/;
 
+function validateBgJson(parsed: any): ValidationResult {
+    const keys = Object.keys(parsed);
+    for (const key of keys) {
+        if (!key.startsWith("bg@")) {
+            return { error: t("waveConfig.validation.bgTopLevelKey", { key }) };
+        }
+    }
+    return { success: true };
+}
+
 function validateAiJson(parsed: any): ValidationResult {
     const keys = Object.keys(parsed);
     for (const key of keys) {
         if (!key.startsWith("ai@")) {
-            return { error: `Invalid key "${key}": all top-level keys must start with "ai@"` };
+            return { error: t("waveConfig.validation.aiTopLevelKey", { key }) };
         }
     }
     return { success: true };
@@ -48,74 +60,75 @@ function validateWaveAiJson(parsed: any): ValidationResult {
     for (const key of keys) {
         if (!keyPattern.test(key)) {
             return {
-                error: `Invalid key "${key}": keys must only contain letters, numbers, underscores, @, dots, and hyphens`,
+                error: t("waveConfig.validation.waveAiKeyPattern", { key }),
             };
         }
     }
     return { success: true };
 }
 
-function makeConfigFiles(isWindows: boolean): ConfigFile[] {
-    return [
-        {
-            name: "General",
-            path: "settings.json",
-            language: "json",
-            docsUrl: "https://docs.waveterm.dev/config",
-            hasJsonView: true,
-        },
-        {
-            name: "Connections",
-            path: "connections.json",
-            language: "json",
-            docsUrl: "https://docs.waveterm.dev/connections",
-            description: isWindows ? "SSH hosts and WSL distros" : "SSH hosts",
-            hasJsonView: true,
-        },
-        {
-            name: "Sidebar Widgets",
-            path: "widgets.json",
-            language: "json",
-            docsUrl: "https://docs.waveterm.dev/customwidgets",
-            hasJsonView: true,
-        },
-        {
-            name: "Wave AI Modes",
-            path: "waveai.json",
-            language: "json",
-            description: "Local models and BYOK",
-            docsUrl: "https://docs.waveterm.dev/waveai-modes",
-            validator: validateWaveAiJson,
-            hasJsonView: true,
-            // visualComponent: WaveAIVisualContent,
-        },
-        {
-            name: "Tab Backgrounds",
-            path: "backgrounds.json",
-            language: "json",
-            docsUrl: "https://docs.waveterm.dev/tab-backgrounds",
-            hasJsonView: true,
-        },
-        {
-            name: "Secrets",
-            path: "secrets",
-            isSecrets: true,
-            hasJsonView: false,
-            visualComponent: SecretsContent,
-        },
-    ];
-}
+const configFiles: ConfigFile[] = [
+    {
+        name: t("waveConfig.files.general"),
+        path: "settings.json",
+        language: "json",
+        docsUrl: "https://docs.waveterm.dev/config",
+        hasJsonView: true,
+    },
+    {
+        name: t("waveConfig.files.connections"),
+        path: "connections.json",
+        language: "json",
+        docsUrl: "https://docs.waveterm.dev/connections",
+        description: isWindows()
+            ? t("waveConfig.files.connectionsDescWindows")
+            : t("waveConfig.files.connectionsDesc"),
+        hasJsonView: true,
+    },
+    {
+        name: t("waveConfig.files.sidebarWidgets"),
+        path: "widgets.json",
+        language: "json",
+        docsUrl: "https://docs.waveterm.dev/customwidgets",
+        hasJsonView: true,
+    },
+    {
+        name: t("waveConfig.files.waveAiModes"),
+        path: "waveai.json",
+        language: "json",
+        description: t("waveConfig.files.waveAiModesDesc"),
+        docsUrl: "https://docs.waveterm.dev/waveai-modes",
+        validator: validateWaveAiJson,
+        hasJsonView: true,
+        // visualComponent: WaveAIVisualContent,
+    },
+    {
+        name: t("waveConfig.files.tabBackgrounds"),
+        path: "presets/bg.json",
+        language: "json",
+        docsUrl: "https://docs.waveterm.dev/presets#background-configurations",
+        validator: validateBgJson,
+        hasJsonView: true,
+    },
+    {
+        name: t("waveConfig.files.secrets"),
+        path: "secrets",
+        isSecrets: true,
+        hasJsonView: false,
+        visualComponent: SecretsContent,
+    },
+];
 
 const deprecatedConfigFiles: ConfigFile[] = [
     {
-        name: "Presets",
+        name: t("waveConfig.files.presets"),
         path: "presets.json",
         language: "json",
         deprecated: true,
         hasJsonView: true,
     },
     {
-        name: "AI Presets",
+        name: t("waveConfig.files.aiPresets"),
         path: "presets/ai.json",
         language: "json",
         deprecated: true,
@@ -129,12 +142,11 @@ export class WaveConfigViewModel implements ViewModel {
     blockId: string;
     viewType = "waveconfig";
     viewIcon = atom("gear");
-    viewName = atom("Wave Config");
+    viewName = atom(t("waveConfig.viewName"));
     viewComponent = WaveConfigView;
     noPadding = atom(true);
     nodeModel: BlockNodeModel;
     tabModel: TabModel;
-    env: WaveConfigEnv;
 
     selectedFileAtom: PrimitiveAtom<ConfigFile>;
     fileContentAtom: PrimitiveAtom<string>;
@@ -147,7 +159,6 @@ export class WaveConfigViewModel implements ViewModel {
     isMenuOpenAtom: PrimitiveAtom<boolean>;
     presetsJsonExistsAtom: PrimitiveAtom<boolean>;
     activeTabAtom: PrimitiveAtom<"visual" | "json">;
-    configErrorFilesAtom: Atom<Set<string>>;
     configDir: string;
     saveShortcut: string;
     editorRef: React.RefObject<MonacoTypes.editor.IStandaloneCodeEditor>;
@@ -162,13 +173,12 @@ export class WaveConfigViewModel implements ViewModel {
     storageBackendErrorAtom: PrimitiveAtom<string | null>;
     secretValueRef: HTMLTextAreaElement | null = null;
 
-    constructor({ blockId, nodeModel, tabModel, waveEnv }: ViewModelInitType) {
+    constructor(blockId: string, nodeModel: BlockNodeModel, tabModel: TabModel) {
         this.blockId = blockId;
         this.nodeModel = nodeModel;
         this.tabModel = tabModel;
-        this.env = waveEnv as WaveConfigEnv;
-        this.configDir = this.env.electron.getConfigDir();
-        const platform = this.env.electron.getPlatform();
+        this.configDir = getApi().getConfigDir();
+        const platform = getApi().getPlatform();
         this.saveShortcut = platform === "darwin" ? "Cmd+S" : "Alt+S";
 
         this.selectedFileAtom = atom(null) as PrimitiveAtom<ConfigFile>;
@@ -182,14 +192,6 @@ export class WaveConfigViewModel implements ViewModel {
         this.isMenuOpenAtom = atom(false);
         this.presetsJsonExistsAtom = atom(false);
         this.activeTabAtom = atom<"visual" | "json">("visual");
-        this.configErrorFilesAtom = atom((get) => {
-            const fullConfig = get(this.env.atoms.fullConfigAtom);
-            const errorSet = new Set<string>();
-            for (const cerr of fullConfig?.configerrors ?? []) {
-                errorSet.add(cerr.file);
-            }
-            return errorSet;
-        });
         this.editorRef = React.createRef();
 
         this.secretNamesAtom = atom<string[]>([]);
@@ -208,7 +210,7 @@ export class WaveConfigViewModel implements ViewModel {
     async checkPresetsJsonExists() {
         try {
             const fullPath = `${this.configDir}/presets.json`;
-            const fileInfo = await this.env.rpc.FileInfoCommand(TabRpcClient, {
+            const fileInfo = await RpcApi.FileInfoCommand(TabRpcClient, {
                 info: { path: fullPath },
             });
             if (!fileInfo.notfound) {
@@ -222,10 +224,8 @@ export class WaveConfigViewModel implements ViewModel {
     initialize() {
         const selectedFile = globalStore.get(this.selectedFileAtom);
         if (!selectedFile) {
-            const metaFileAtom = this.env.getBlockMetaKeyAtom(this.blockId, "file");
+            const metaFileAtom = getBlockMetaKeyAtom(this.blockId, "file");
             const savedFilePath = globalStore.get(metaFileAtom);
-            const configFiles = this.getConfigFiles();
-            const deprecatedConfigFiles = this.getDeprecatedConfigFiles();
 
             let fileToLoad: ConfigFile | null = null;
             if (savedFilePath) {
@@ -246,7 +246,7 @@ export class WaveConfigViewModel implements ViewModel {
     }
 
     getConfigFiles(): ConfigFile[] {
-        return makeConfigFiles(this.env.isWindows());
+        return configFiles;
     }
 
     getDeprecatedConfigFiles(): ConfigFile[] {
@@ -263,21 +263,6 @@ export class WaveConfigViewModel implements ViewModel {
         return globalStore.get(this.hasEditedAtom);
     }
 
-    confirmDiscardChanges(): boolean {
-        if (!this.hasChanges()) {
-            return true;
-        }
-        return window.confirm("You have unsaved changes. Discard and continue?");
-    }
-
-    discardChanges() {
-        const originalContent = globalStore.get(this.originalContentAtom);
-        globalStore.set(this.fileContentAtom, originalContent);
-        globalStore.set(this.hasEditedAtom, false);
-        globalStore.set(this.validationErrorAtom, null);
-        globalStore.set(this.errorMessageAtom, null);
-    }
-
     markAsEdited() {
         globalStore.set(this.hasEditedAtom, true);
     }
@@ -289,8 +274,8 @@ export class WaveConfigViewModel implements ViewModel {
 
         if (file.isSecrets) {
             globalStore.set(this.selectedFileAtom, file);
-            this.env.rpc.SetMetaCommand(TabRpcClient, {
-                oref: makeORef("block", this.blockId),
+            RpcApi.SetMetaCommand(TabRpcClient, {
+                oref: WOS.makeORef("block", this.blockId),
                 meta: { file: file.path },
             });
             globalStore.set(this.isLoadingAtom, false);
@@ -301,7 +286,7 @@ export class WaveConfigViewModel implements ViewModel {
 
         try {
             const fullPath = `${this.configDir}/${file.path}`;
-            const fileData = await this.env.rpc.FileReadCommand(TabRpcClient, {
+            const fileData = await RpcApi.FileReadCommand(TabRpcClient, {
                 info: { path: fullPath },
             });
             const content = fileData?.data64 ? base64ToString(fileData.data64) : "";
@@ -312,12 +297,18 @@ export class WaveConfigViewModel implements ViewModel {
                 globalStore.set(this.fileContentAtom, content);
             }
             globalStore.set(this.selectedFileAtom, file);
-            this.env.rpc.SetMetaCommand(TabRpcClient, {
-                oref: makeORef("block", this.blockId),
+            RpcApi.SetMetaCommand(TabRpcClient, {
+                oref: WOS.makeORef("block", this.blockId),
                 meta: { file: file.path },
             });
         } catch (err) {
-            globalStore.set(this.errorMessageAtom, `Failed to load ${file.name}: ${err.message || String(err)}`);
+            globalStore.set(
+                this.errorMessageAtom,
+                t("waveConfig.error.failedToLoad", {
+                    name: file.name,
+                    error: err.message || String(err),
+                })
+            );
             globalStore.set(this.fileContentAtom, "");
             globalStore.set(this.originalContentAtom, "");
         } finally {
@@ -338,7 +329,7 @@ export class WaveConfigViewModel implements ViewModel {
 
             try {
                 const fullPath = `${this.configDir}/${selectedFile.path}`;
-                await this.env.rpc.FileWriteCommand(TabRpcClient, {
+                await RpcApi.FileWriteCommand(TabRpcClient, {
                     info: { path: fullPath },
                     data64: stringToBase64(""),
                 });
@@ -348,7 +339,10 @@ export class WaveConfigViewModel implements ViewModel {
             } catch (err) {
                 globalStore.set(
                     this.errorMessageAtom,
-                    `Failed to save ${selectedFile.name}: ${err.message || String(err)}`
+                    t("waveConfig.error.failedToSave", {
+                        name: selectedFile.name,
+                        error: err.message || String(err),
+                    })
                 );
             } finally {
                 globalStore.set(this.isSavingAtom, false);
@@ -360,7 +354,7 @@ export class WaveConfigViewModel implements ViewModel {
             const parsed = JSON.parse(fileContent);
 
             if (typeof parsed !== "object" || parsed == null || Array.isArray(parsed)) {
-                globalStore.set(this.validationErrorAtom, "JSON must be an object, not an array, primitive, or null");
+                globalStore.set(this.validationErrorAtom, t("waveConfig.validation.jsonObjectRequired"));
                 return;
             }
 
@@ -380,7 +374,7 @@ export class WaveConfigViewModel implements ViewModel {
 
             try {
                 const fullPath = `${this.configDir}/${selectedFile.path}`;
-                await this.env.rpc.FileWriteCommand(TabRpcClient, {
+                await RpcApi.FileWriteCommand(TabRpcClient, {
                     info: { path: fullPath },
                     data64: stringToBase64(formatted),
                 });
@@ -410,7 +404,7 @@ export class WaveConfigViewModel implements ViewModel {
 
     async checkStorageBackend() {
         try {
-            const backend = await this.env.rpc.GetSecretsLinuxStorageBackendCommand(TabRpcClient);
+            const backend = await RpcApi.GetSecretsLinuxStorageBackendCommand(TabRpcClient);
             if (backend === "basic_text" || backend === "unknown") {
                 globalStore.set(
                     this.storageBackendErrorAtom,
@@ -429,7 +423,7 @@ export class WaveConfigViewModel implements ViewModel {
         globalStore.set(this.errorMessageAtom, null);
 
         try {
-            const names = await this.env.rpc.GetSecretsNamesCommand(TabRpcClient);
+            const names = await RpcApi.GetSecretsNamesCommand(TabRpcClient);
             globalStore.set(this.secretNamesAtom, names || []);
         } catch (error) {
             globalStore.set(this.errorMessageAtom, `Failed to load secrets: ${error.message}`);
@@ -461,7 +455,7 @@ export class WaveConfigViewModel implements ViewModel {
         globalStore.set(this.errorMessageAtom, null);
 
         try {
-            const secrets = await this.env.rpc.GetSecretsCommand(TabRpcClient, [selectedSecret]);
+            const secrets = await RpcApi.GetSecretsCommand(TabRpcClient, [selectedSecret]);
             const value = secrets[selectedSecret];
             if (value !== undefined) {
                 globalStore.set(this.secretValueAtom, value);
@@ -488,8 +482,8 @@ export class WaveConfigViewModel implements ViewModel {
         globalStore.set(this.errorMessageAtom, null);
 
         try {
-            await this.env.rpc.SetSecretsCommand(TabRpcClient, { [selectedSecret]: secretValue });
-            this.env.rpc.RecordTEventCommand(
+            await RpcApi.SetSecretsCommand(TabRpcClient, { [selectedSecret]: secretValue });
+            RpcApi.RecordTEventCommand(
                 TabRpcClient,
                 {
                     event: "action:other",
@@ -518,7 +512,7 @@ export class WaveConfigViewModel implements ViewModel {
         globalStore.set(this.errorMessageAtom, null);
 
         try {
-            await this.env.rpc.SetSecretsCommand(TabRpcClient, { [selectedSecret]: null });
+            await RpcApi.SetSecretsCommand(TabRpcClient, { [selectedSecret]: null });
             this.closeSecretView();
             await this.refreshSecrets();
         } catch (error) {
@@ -569,8 +563,8 @@ export class WaveConfigViewModel implements ViewModel {
         globalStore.set(this.errorMessageAtom, null);
 
         try {
-            await this.env.rpc.SetSecretsCommand(TabRpcClient, { [name]: value });
-            this.env.rpc.RecordTEventCommand(
+            await RpcApi.SetSecretsCommand(TabRpcClient, { [name]: value });
+            RpcApi.RecordTEventCommand(
                 TabRpcClient,
                 {
                     event: "action:other",
