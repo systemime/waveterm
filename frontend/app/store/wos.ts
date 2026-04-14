@@ -3,12 +3,12 @@
 
 // WaveObjectStore
 
-import { isPreviewWindow } from "@/app/store/windowtype";
-import { waveEventSubscribeSingle } from "@/app/store/wps";
+import { waveEventSubscribe } from "@/app/store/wps";
 import { getWebServerEndpoint } from "@/util/endpoints";
 import { fetch } from "@/util/fetchutil";
 import { fireAndForget } from "@/util/util";
 import { atom, Atom, Getter, PrimitiveAtom, Setter, useAtomValue } from "jotai";
+import { useEffect } from "react";
 import { globalStore } from "./jotaiStore";
 import { ObjectService } from "./services";
 
@@ -20,6 +20,8 @@ type WaveObjectDataItemType<T extends WaveObj> = {
 type WaveObjectValue<T extends WaveObj> = {
     pendingPromise: Promise<T>;
     dataAtom: PrimitiveAtom<WaveObjectDataItemType<T>>;
+    refCount: number;
+    holdTime: number;
 };
 
 function splitORef(oref: string): [string, string] {
@@ -55,19 +57,7 @@ function makeORef(otype: string, oid: string): string {
     return `${otype}:${oid}`;
 }
 
-const previewMockObjects: Map<string, WaveObj> = new Map();
-
-function mockObjectForPreview<T extends WaveObj>(oref: string, obj: T): void {
-    if (!isPreviewWindow()) {
-        throw new Error("mockObjectForPreview can only be called in a preview window");
-    }
-    previewMockObjects.set(oref, obj);
-}
-
 function GetObject<T>(oref: string): Promise<T> {
-    if (isPreviewWindow()) {
-        return Promise.resolve((previewMockObjects.get(oref) as T) ?? null);
-    }
     return callBackendService("object", "GetObject", [oref], true);
 }
 
@@ -89,7 +79,7 @@ function debugLogBackendCall(methodName: string, durationStr: string, args: any[
 }
 
 function wpsSubscribeToObject(oref: string): () => void {
-    return waveEventSubscribeSingle({
+    return waveEventSubscribe({
         eventType: "waveobj:update",
         scope: oref,
         handler: (event) => {
@@ -115,9 +105,7 @@ function callBackendService(service: string, method: string, args: any[], noUICo
     const usp = new URLSearchParams();
     usp.set("service", service);
     usp.set("method", method);
-    const webEndpoint = getWebServerEndpoint();
-    if (webEndpoint == null) throw new Error(`cannot call ${methodName}: no web endpoint`);
-    const url = webEndpoint + "/wave/service?" + usp.toString();
+    const url = getWebServerEndpoint() + "/wave/service?" + usp.toString();
     const fetchPromise = fetch(url, {
         method: "POST",
         body: JSON.stringify(waveCall),
@@ -148,6 +136,12 @@ function callBackendService(service: string, method: string, args: any[], noUICo
 
 const waveObjectValueCache = new Map<string, WaveObjectValue<any>>();
 
+function clearWaveObjectCache() {
+    waveObjectValueCache.clear();
+}
+
+const defaultHoldTime = 5000; // 5-seconds
+
 function reloadWaveObject<T extends WaveObj>(oref: string): Promise<T> {
     let wov = waveObjectValueCache.get(oref);
     if (wov === undefined) {
@@ -162,7 +156,7 @@ function reloadWaveObject<T extends WaveObj>(oref: string): Promise<T> {
 }
 
 function createWaveValueObject<T extends WaveObj>(oref: string, shouldFetch: boolean): WaveObjectValue<T> {
-    const wov = { pendingPromise: null, dataAtom: null };
+    const wov = { pendingPromise: null, dataAtom: null, refCount: 0, holdTime: Date.now() + 5000 };
     wov.dataAtom = atom({ value: null, loading: true });
     if (!shouldFetch) {
         return wov;
@@ -201,6 +195,7 @@ function getWaveObjectValue<T extends WaveObj>(oref: string, createIfMissing = t
 
 function loadAndPinWaveObject<T extends WaveObj>(oref: string): Promise<T> {
     const wov = getWaveObjectValue<T>(oref);
+    wov.refCount++;
     if (wov.pendingPromise == null) {
         const dataValue = globalStore.get(wov.dataAtom);
         return Promise.resolve(dataValue.value);
@@ -208,48 +203,35 @@ function loadAndPinWaveObject<T extends WaveObj>(oref: string): Promise<T> {
     return wov.pendingPromise;
 }
 
-const waveObjectDerivedAtomCache = new Map<string, Atom<any>>();
-
-function getWaveObjectAtom<T extends WaveObj>(oref: string): Atom<T> {
-    const cacheKey = oref + ":value";
-    let cachedAtom = waveObjectDerivedAtomCache.get(cacheKey) as Atom<T>;
-    if (cachedAtom != null) {
-        return cachedAtom;
-    }
+function getWaveObjectAtom<T extends WaveObj>(oref: string): WritableWaveObjectAtom<T> {
     const wov = getWaveObjectValue<T>(oref);
-    cachedAtom = atom((get) => get(wov.dataAtom).value);
-    waveObjectDerivedAtomCache.set(cacheKey, cachedAtom);
-    return cachedAtom;
+    return atom(
+        (get) => get(wov.dataAtom).value,
+        (_get, set, value: T) => {
+            setObjectValue(value, set, true);
+        }
+    );
 }
 
 function getWaveObjectLoadingAtom(oref: string): Atom<boolean> {
-    const cacheKey = oref + ":loading";
-    let cachedAtom = waveObjectDerivedAtomCache.get(cacheKey) as Atom<boolean>;
-    if (cachedAtom != null) {
-        return cachedAtom;
-    }
     const wov = getWaveObjectValue(oref);
-    cachedAtom = atom((get) => {
+    return atom((get) => {
         const dataValue = get(wov.dataAtom);
+        if (dataValue.loading) {
+            return null;
+        }
         return dataValue.loading;
     });
-    waveObjectDerivedAtomCache.set(cacheKey, cachedAtom);
-    return cachedAtom;
-}
-
-function isWaveObjectNullAtom(oref: string): Atom<boolean> {
-    const cacheKey = oref + ":isnull";
-    let cachedAtom = waveObjectDerivedAtomCache.get(cacheKey) as Atom<boolean>;
-    if (cachedAtom != null) {
-        return cachedAtom;
-    }
-    cachedAtom = atom((get) => get(getWaveObjectAtom(oref)) == null);
-    waveObjectDerivedAtomCache.set(cacheKey, cachedAtom);
-    return cachedAtom;
 }
 
 function useWaveObjectValue<T extends WaveObj>(oref: string): [T, boolean] {
     const wov = getWaveObjectValue<T>(oref);
+    useEffect(() => {
+        wov.refCount++;
+        return () => {
+            wov.refCount--;
+        };
+    }, [oref]);
     const atomVal = useAtomValue(wov.dataAtom);
     return [atomVal.value, atomVal.loading];
 }
@@ -275,12 +257,22 @@ function updateWaveObject(update: WaveObjUpdate) {
         console.log("WaveObj updated", oref);
         globalStore.set(wov.dataAtom, { value: update.obj, loading: false });
     }
+    wov.holdTime = Date.now() + defaultHoldTime;
     return;
 }
 
 function updateWaveObjects(vals: WaveObjUpdate[]) {
     for (const val of vals) {
         updateWaveObject(val);
+    }
+}
+
+function cleanWaveObjectCache() {
+    const now = Date.now();
+    for (const [oref, wov] of waveObjectValueCache) {
+        if (wov.refCount == 0 && wov.holdTime < now) {
+            waveObjectValueCache.delete(oref);
+        }
     }
 }
 
@@ -316,13 +308,13 @@ function setObjectValue<T extends WaveObj>(value: T, setFn?: Setter, pushToServe
 
 export {
     callBackendService,
+    cleanWaveObjectCache,
+    clearWaveObjectCache,
     getObjectValue,
     getWaveObjectAtom,
     getWaveObjectLoadingAtom,
-    isWaveObjectNullAtom,
     loadAndPinWaveObject,
     makeORef,
-    mockObjectForPreview,
     reloadWaveObject,
     setObjectValue,
     splitORef,
