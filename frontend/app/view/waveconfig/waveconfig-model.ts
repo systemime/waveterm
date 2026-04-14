@@ -384,13 +384,21 @@ export class WaveConfigViewModel implements ViewModel {
             } catch (err) {
                 globalStore.set(
                     this.errorMessageAtom,
-                    `Failed to save ${selectedFile.name}: ${err.message || String(err)}`
+                    t("waveConfig.error.failedToSave", {
+                        name: selectedFile.name,
+                        error: err.message || String(err),
+                    })
                 );
             } finally {
                 globalStore.set(this.isSavingAtom, false);
             }
         } catch (err) {
-            globalStore.set(this.validationErrorAtom, `Invalid JSON: ${err.message || String(err)}`);
+            globalStore.set(
+                this.validationErrorAtom,
+                t("waveConfig.validation.invalidJson", {
+                    error: err.message || String(err),
+                })
+            );
         }
     }
 
@@ -408,13 +416,18 @@ export class WaveConfigViewModel implements ViewModel {
             if (backend === "basic_text" || backend === "unknown") {
                 globalStore.set(
                     this.storageBackendErrorAtom,
-                    "No appropriate secret manager found. Cannot manage secrets securely."
+                    t("waveConfig.secrets.noSecureManager")
                 );
             } else {
                 globalStore.set(this.storageBackendErrorAtom, null);
             }
         } catch (error) {
-            globalStore.set(this.storageBackendErrorAtom, `Error checking storage backend: ${error.message}`);
+            globalStore.set(
+                this.storageBackendErrorAtom,
+                t("waveConfig.secrets.storageBackendError", {
+                    error: error.message,
+                })
+            );
         }
     }
 
@@ -426,7 +439,12 @@ export class WaveConfigViewModel implements ViewModel {
             const names = await RpcApi.GetSecretsNamesCommand(TabRpcClient);
             globalStore.set(this.secretNamesAtom, names || []);
         } catch (error) {
-            globalStore.set(this.errorMessageAtom, `Failed to load secrets: ${error.message}`);
+            globalStore.set(
+                this.errorMessageAtom,
+                t("waveConfig.secrets.failedToLoadSecrets", {
+                    error: error.message,
+                })
+            );
         } finally {
             globalStore.set(this.isLoadingAtom, false);
         }
@@ -461,10 +479,20 @@ export class WaveConfigViewModel implements ViewModel {
                 globalStore.set(this.secretValueAtom, value);
                 globalStore.set(this.secretShownAtom, true);
             } else {
-                globalStore.set(this.errorMessageAtom, `Secret not found: ${selectedSecret}`);
+                globalStore.set(
+                    this.errorMessageAtom,
+                    t("waveConfig.secrets.secretNotFound", {
+                        name: selectedSecret,
+                    })
+                );
             }
         } catch (error) {
-            globalStore.set(this.errorMessageAtom, `Failed to load secret: ${error.message}`);
+            globalStore.set(
+                this.errorMessageAtom,
+                t("waveConfig.secrets.failedToLoadSecret", {
+                    error: error.message,
+                })
+            );
         } finally {
             globalStore.set(this.isLoadingAtom, false);
         }
@@ -495,7 +523,12 @@ export class WaveConfigViewModel implements ViewModel {
             );
             this.closeSecretView();
         } catch (error) {
-            globalStore.set(this.errorMessageAtom, `Failed to save secret: ${error.message}`);
+            globalStore.set(
+                this.errorMessageAtom,
+                t("waveConfig.secrets.failedToSaveSecret", {
+                    error: error.message,
+                })
+            );
         } finally {
             globalStore.set(this.isLoadingAtom, false);
         }
@@ -516,7 +549,12 @@ export class WaveConfigViewModel implements ViewModel {
             this.closeSecretView();
             await this.refreshSecrets();
         } catch (error) {
-            globalStore.set(this.errorMessageAtom, `Failed to delete secret: ${error.message}`);
+            globalStore.set(
+                this.errorMessageAtom,
+                t("waveConfig.secrets.failedToDeleteSecret", {
+                    error: error.message,
+                })
+            );
         } finally {
             globalStore.set(this.isLoadingAtom, false);
         }
@@ -541,21 +579,26 @@ export class WaveConfigViewModel implements ViewModel {
         const value = globalStore.get(this.newSecretValueAtom);
 
         if (!name) {
-            globalStore.set(this.errorMessageAtom, "Secret name cannot be empty");
+            globalStore.set(this.errorMessageAtom, t("waveConfig.secrets.secretNameEmpty"));
             return;
         }
 
         if (!SecretNameRegex.test(name)) {
             globalStore.set(
                 this.errorMessageAtom,
-                "Invalid secret name: must start with a letter and contain only letters, numbers, and underscores"
+                t("waveConfig.secrets.secretNameInvalid")
             );
             return;
         }
 
         const existingNames = globalStore.get(this.secretNamesAtom);
         if (existingNames.includes(name)) {
-            globalStore.set(this.errorMessageAtom, `Secret "${name}" already exists`);
+            globalStore.set(
+                this.errorMessageAtom,
+                t("waveConfig.secrets.secretAlreadyExists", {
+                    name,
+                })
+            );
             return;
         }
 
@@ -579,7 +622,12 @@ export class WaveConfigViewModel implements ViewModel {
             globalStore.set(this.newSecretValueAtom, "");
             await this.refreshSecrets();
         } catch (error) {
-            globalStore.set(this.errorMessageAtom, `Failed to add secret: ${error.message}`);
+            globalStore.set(
+                this.errorMessageAtom,
+                t("waveConfig.secrets.failedToAddSecret", {
+                    error: error.message,
+                })
+            );
         } finally {
             globalStore.set(this.isLoadingAtom, false);
         }

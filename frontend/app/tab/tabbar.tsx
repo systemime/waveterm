@@ -651,7 +651,7 @@ const TabBar = memo(({ workspace }: TabBarProps) => {
         elemtype: "iconbutton",
         icon: "plus",
         click: handleAddTab,
-        title: "Add Tab",
+        title: t("tabBar.addTab"),
     };
     return (
         <div ref={tabbarWrapperRef} className="tab-bar-wrapper">

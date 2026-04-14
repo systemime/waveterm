@@ -1,3 +1,4 @@
+import { t } from "@/util/i18n";
 import { fireAndForget, makeIconClass } from "@/util/util";
 import clsx from "clsx";
 import { memo, useEffect, useRef, useState } from "react";
@@ -115,7 +116,7 @@ const WorkspaceEditorComponent = ({
             <IconSelector selectedIcon={icon} icons={icons} onSelect={onIconChange} />
             <div className="delete-ws-btn-wrapper">
                 <Button className="ghost red text-[12px] bold" onClick={onDeleteWorkspace}>
-                    Delete workspace
+                    {t("workspaceSwitcher.deleteWorkspace")}
                 </Button>
             </div>
         </div>
