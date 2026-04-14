@@ -524,6 +524,23 @@
         "advanced": "Advanced",
         "closeToolbar": "Close Toolbar"
     },
+    "preview": {
+        "download": "Download",
+        "downloadProgress": "Download Progress",
+        "downloadFile": "Download File",
+        "downloadFolder": "Download Folder",
+        "downloadFileFailed": "Download File Failed",
+        "downloadFolderFailed": "Download Folder Failed",
+        "downloadUnableToPrepare": "Unable to prepare download",
+        "downloadStatusQueued": "Queued",
+        "downloadStatusDownloading": "Downloading",
+        "downloadStatusCompleted": "Completed",
+        "downloadStatusFailed": "Failed",
+        "downloadBytesProgress": "{{current}} / {{total}}",
+        "downloadFolderProgress": "{{current}} / {{total}} files",
+        "openPreviewInNewBlock": "Open Preview in New Block",
+        "openTerminalHere": "Open Terminal Here"
+    },
     "webview": {
         "viewName": "Web",
         "reset": "Reset",

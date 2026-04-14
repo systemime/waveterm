@@ -1,9 +1,15 @@
 import { createBlock, getApi } from "@/app/store/global";
+import { t } from "@/util/i18n";
 import { makeNativeLabel } from "./platformutil";
 import { fireAndForget } from "./util";
 import { formatRemoteUri } from "./waveutil";
 
-export function addOpenMenuItems(menu: ContextMenuItem[], conn: string, finfo: FileInfo): ContextMenuItem[] {
+export function addOpenMenuItems(
+    menu: ContextMenuItem[],
+    conn: string,
+    finfo: FileInfo,
+    onRemoteDownload?: (fileInfo: FileInfo) => void
+): ContextMenuItem[] {
     if (!finfo) {
         return menu;
     }
@@ -30,8 +36,14 @@ export function addOpenMenuItems(menu: ContextMenuItem[], conn: string, finfo: F
         }
     } else {
         menu.push({
-            label: "Download File",
+            label: finfo.isdir
+                ? t("preview.downloadFolder", undefined, "Download Folder")
+                : t("preview.downloadFile", undefined, "Download File"),
             click: () => {
+                if (onRemoteDownload) {
+                    onRemoteDownload(finfo);
+                    return;
+                }
                 const remoteUri = formatRemoteUri(finfo.path, conn);
                 getApi().downloadFile(remoteUri);
             },
@@ -42,7 +54,7 @@ export function addOpenMenuItems(menu: ContextMenuItem[], conn: string, finfo: F
     });
     if (!finfo.isdir) {
         menu.push({
-            label: "Open Preview in New Block",
+            label: t("preview.openPreviewInNewBlock", undefined, "Open Preview in New Block"),
             click: () =>
                 fireAndForget(async () => {
                     const blockDef: BlockDef = {
@@ -57,7 +69,7 @@ export function addOpenMenuItems(menu: ContextMenuItem[], conn: string, finfo: F
         });
     }
     menu.push({
-        label: "Open Terminal Here",
+        label: t("preview.openTerminalHere", undefined, "Open Terminal Here"),
         click: () => {
             const termBlockDef: BlockDef = {
                 meta: {

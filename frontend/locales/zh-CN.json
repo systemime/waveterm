@@ -524,6 +524,23 @@
         "advanced": "高级",
         "closeToolbar": "关闭工具栏"
     },
+    "preview": {
+        "download": "下载",
+        "downloadProgress": "下载进度",
+        "downloadFile": "下载文件",
+        "downloadFolder": "下载文件夹",
+        "downloadFileFailed": "下载文件失败",
+        "downloadFolderFailed": "下载文件夹失败",
+        "downloadUnableToPrepare": "无法准备下载任务",
+        "downloadStatusQueued": "已加入队列",
+        "downloadStatusDownloading": "下载中",
+        "downloadStatusCompleted": "已完成",
+        "downloadStatusFailed": "失败",
+        "downloadBytesProgress": "{{current}} / {{total}}",
+        "downloadFolderProgress": "{{current}} / {{total}} 个文件",
+        "openPreviewInNewBlock": "在新区块中打开预览",
+        "openTerminalHere": "在此处打开终端"
+    },
     "webview": {
         "viewName": "网页",
         "reset": "重置",

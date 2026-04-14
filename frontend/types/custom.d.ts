@@ -100,6 +100,8 @@ declare global {
         onNavigate: (callback: (url: string) => void) => void;
         onIframeNavigate: (callback: (url: string) => void) => void;
         downloadFile: (path: string) => void; // download
+        startDownloadTask: (request: DownloadTaskRequest) => Promise<string | null>; // start-download-task
+        onDownloadTaskUpdate: (callback: (update: DownloadTaskUpdate) => void) => () => void; // download-task-update
         openExternal: (url: string) => void; // open-external
         onFullScreenChange: (callback: (isFullScreen: boolean) => void) => void; // fullscreen-change
         onZoomFactorChange: (callback: (zoomFactor: number) => void) => void; // zoom-factor-change
@@ -483,6 +485,39 @@ declare global {
         buttons?: Array<ErrorButtonDef>;
         closeAction?: () => void;
         showDismiss?: boolean;
+    };
+
+    type DownloadTaskStatus = "queued" | "downloading" | "completed" | "failed";
+
+    type DownloadTaskKind = "file" | "folder";
+
+    type DownloadTaskItem = {
+        sourcePath: string;
+        downloadName?: string;
+        relativePath?: string;
+        size?: number;
+    };
+
+    type DownloadTaskRequest = {
+        scopeId: string;
+        kind: DownloadTaskKind;
+        displayName: string;
+        items: DownloadTaskItem[];
+    };
+
+    type DownloadTaskUpdate = {
+        id: string;
+        scopeId: string;
+        kind: DownloadTaskKind;
+        displayName: string;
+        status: DownloadTaskStatus;
+        progress: number;
+        receivedBytes: number;
+        totalBytes: number;
+        completedFiles: number;
+        totalFiles: number;
+        savePath?: string;
+        error?: string;
     };
 
     type AIMessage = {

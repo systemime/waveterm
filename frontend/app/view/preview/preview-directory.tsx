@@ -1,14 +1,17 @@
-// Copyright 2026, Command Line Inc.
+// Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 import { ContextMenuModel } from "@/app/store/contextmenu";
-import { globalStore } from "@/app/store/jotaiStore";
+import { atoms, getApi, globalStore } from "@/app/store/global";
+import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { Button } from "@/element/button";
+import { ProgressBar } from "@/element/progressbar";
+import { t } from "@/util/i18n";
 import { checkKeyPressed, isCharacterKeyEvent } from "@/util/keyutil";
 import { PLATFORM, PlatformMacOS } from "@/util/platformutil";
 import { addOpenMenuItems } from "@/util/previewutil";
-import { fireAndForget } from "@/util/util";
+import { fireAndForget, isBlank } from "@/util/util";
 import { formatRemoteUri } from "@/util/waveutil";
 import { offset, useDismiss, useFloating, useInteractions } from "@floating-ui/react";
 import {
@@ -39,14 +42,95 @@ import {
     handleFileDelete,
     handleRename,
     isIconValid,
-    makeDirectoryDefaultMenuItems,
     mergeError,
     overwriteError,
 } from "./preview-directory-utils";
 import { type PreviewModel } from "./preview-model";
-import type { PreviewEnv } from "./previewenv";
 
 const PageJumpSize = 20;
+
+function getDownloadStatusText(task: DownloadTaskUpdate): string {
+    switch (task.status) {
+        case "queued":
+            return t("preview.downloadStatusQueued", undefined, "Queued");
+        case "downloading":
+            return t("preview.downloadStatusDownloading", undefined, "Downloading");
+        case "completed":
+            return t("preview.downloadStatusCompleted", undefined, "Completed");
+        case "failed":
+            return t("preview.downloadStatusFailed", undefined, "Failed");
+        default:
+            return task.status;
+    }
+}
+
+function getDisplayName(fileInfo: FileInfo): string {
+    if (!isBlank(fileInfo.name)) {
+        return fileInfo.name;
+    }
+    if (!isBlank(fileInfo.path)) {
+        return fileInfo.path.split("/").filter(Boolean).at(-1) ?? fileInfo.path;
+    }
+    return t("preview.download", undefined, "Download");
+}
+
+function DownloadTaskDock({ tasks, dismissTask }: { tasks: DownloadTaskUpdate[]; dismissTask: (id: string) => void }) {
+    if (tasks.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="dir-download-dock">
+            {tasks.map((task) => {
+                const details =
+                    task.kind === "folder"
+                        ? t(
+                              "preview.downloadFolderProgress",
+                              { current: task.completedFiles, total: task.totalFiles },
+                              "{{current}} / {{total}} files"
+                          )
+                        : task.totalBytes > 0
+                          ? t(
+                                "preview.downloadBytesProgress",
+                                {
+                                    current: getBestUnit(task.receivedBytes),
+                                    total: getBestUnit(task.totalBytes),
+                                },
+                                "{{current}} / {{total}}"
+                            )
+                          : getBestUnit(task.receivedBytes);
+
+                return (
+                    <div className="dir-download-task" key={task.id}>
+                        <div className="dir-download-task-header">
+                            <div className="dir-download-task-text">
+                                <div className="dir-download-task-title">{task.displayName}</div>
+                                <div className="dir-download-task-meta">
+                                    <span>{getDownloadStatusText(task)}</span>
+                                    <span>{details}</span>
+                                    {task.error ? <span className="dir-download-task-error">{task.error}</span> : null}
+                                </div>
+                            </div>
+                            {(task.status === "completed" || task.status === "failed") && (
+                                <Button
+                                    className="ghost grey dir-download-dismiss"
+                                    onClick={() => dismissTask(task.id)}
+                                    title={t("common.close", undefined, "Close")}
+                                >
+                                    <i className="fa-solid fa-xmark" />
+                                </Button>
+                            )}
+                        </div>
+                        <ProgressBar
+                            progress={task.progress}
+                            label={t("preview.downloadProgress", undefined, "Download Progress")}
+                        />
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
 
 interface DirectoryTableHeaderCellProps {
     header: Header<FileInfo, unknown>;
@@ -94,6 +178,7 @@ interface DirectoryTableProps {
     entryManagerOverlayPropsAtom: PrimitiveAtom<EntryManagerOverlayProps>;
     newFile: () => void;
     newDirectory: () => void;
+    startRemoteDownload: (fileInfo: FileInfo) => void;
 }
 
 const columnHelper = createColumnHelper<FileInfo>();
@@ -110,10 +195,10 @@ function DirectoryTable({
     entryManagerOverlayPropsAtom,
     newFile,
     newDirectory,
+    startRemoteDownload,
 }: DirectoryTableProps) {
-    const env = useWaveEnv<PreviewEnv>();
-    const fullConfig = useAtomValue(env.atoms.fullConfigAtom);
-    const defaultSort = useAtomValue(env.getSettingsKeyAtom("preview:defaultsort")) ?? "name";
+    const searchActive = useAtomValue(model.directorySearchActive);
+    const fullConfig = useAtomValue(atoms.fullConfigAtom);
     const setErrorMsg = useSetAtom(model.errorMsgAtom);
     const getIconFromMimeType = useCallback(
         (mimeType: string): string => {
@@ -148,35 +233,37 @@ function DirectoryTable({
             }),
             columnHelper.accessor("name", {
                 cell: (info) => <span className="dir-table-name ellipsis">{info.getValue()}</span>,
-                header: () => <span className="dir-table-head-name">Name</span>,
+                header: () => <span className="dir-table-head-name">{t("preview.directory.name")}</span>,
                 sortingFn: "alphanumeric",
                 size: 200,
                 minSize: 90,
             }),
             columnHelper.accessor("modestr", {
                 cell: (info) => <span className="dir-table-modestr">{info.getValue()}</span>,
-                header: () => <span>Perm</span>,
+                header: () => <span>{t("preview.directory.perm")}</span>,
                 size: 91,
                 minSize: 90,
                 sortingFn: "alphanumeric",
             }),
             columnHelper.accessor("modtime", {
-                cell: (info) => <span className="dir-table-lastmod">{getLastModifiedTime(info.getValue())}</span>,
-                header: () => <span>Last Modified</span>,
+                cell: (info) => (
+                    <span className="dir-table-lastmod">{getLastModifiedTime(info.getValue(), info.column)}</span>
+                ),
+                header: () => <span>{t("preview.directory.lastModified")}</span>,
                 size: 91,
                 minSize: 65,
                 sortingFn: "datetime",
             }),
             columnHelper.accessor("size", {
                 cell: (info) => <span className="dir-table-size">{getBestUnit(info.getValue())}</span>,
-                header: () => <span className="dir-table-head-size">Size</span>,
+                header: () => <span className="dir-table-head-size">{t("preview.directory.size")}</span>,
                 size: 55,
                 minSize: 50,
                 sortingFn: "auto",
             }),
             columnHelper.accessor("mimetype", {
                 cell: (info) => <span className="dir-table-type ellipsis">{cleanMimetype(info.getValue() ?? "")}</span>,
-                header: () => <span className="dir-table-head-type">Type</span>,
+                header: () => <span className="dir-table-head-type">{t("preview.directory.type")}</span>,
                 size: 97,
                 minSize: 97,
                 sortingFn: "alphanumeric",
@@ -209,8 +296,6 @@ function DirectoryTable({
         [model, setErrorMsg]
     );
 
-    const initialSorting = defaultSort === "modtime" ? [{ id: "modtime", desc: true }] : [{ id: "name", desc: false }];
-
     const table = useReactTable({
         data,
         columns,
@@ -219,7 +304,12 @@ function DirectoryTable({
         getCoreRowModel: getCoreRowModel(),
 
         initialState: {
-            sorting: initialSorting,
+            sorting: [
+                {
+                    id: "name",
+                    desc: false,
+                },
+            ],
             columnVisibility: {
                 path: false,
             },
@@ -291,6 +381,7 @@ function DirectoryTable({
                 setSearch={setSearch}
                 setSelectedPath={setSelectedPath}
                 setRefreshVersion={setRefreshVersion}
+                startRemoteDownload={startRemoteDownload}
                 osRef={osRef.current}
             />
         </OverlayScrollbarsComponent>
@@ -308,6 +399,7 @@ interface TableBodyProps {
     setSearch: (_: string) => void;
     setSelectedPath: (_: string) => void;
     setRefreshVersion: React.Dispatch<React.SetStateAction<number>>;
+    startRemoteDownload: (fileInfo: FileInfo) => void;
     osRef: OverlayScrollbarsComponentRef;
 }
 
@@ -320,6 +412,7 @@ function TableBody({
     setFocusIndex,
     setSearch,
     setRefreshVersion,
+    startRemoteDownload,
     osRef,
 }: TableBodyProps) {
     const searchActive = useAtomValue(model.directorySearchActive);
@@ -370,19 +463,19 @@ function TableBody({
             const fileName = finfo.path.split("/").pop();
             const menu: ContextMenuItem[] = [
                 {
-                    label: "New File",
+                    label: t("preview.directory.newFile"),
                     click: () => {
                         table.options.meta.newFile();
                     },
                 },
                 {
-                    label: "New Folder",
+                    label: t("preview.directory.newFolder"),
                     click: () => {
                         table.options.meta.newDirectory();
                     },
                 },
                 {
-                    label: "Rename",
+                    label: t("preview.directory.rename"),
                     click: () => {
                         table.options.meta.updateName(finfo.path, finfo.isdir);
                     },
@@ -391,42 +484,35 @@ function TableBody({
                     type: "separator",
                 },
                 {
-                    label: "Copy File Name",
+                    label: t("preview.directory.copyFileName"),
                     click: () => fireAndForget(() => navigator.clipboard.writeText(fileName)),
                 },
                 {
-                    label: "Copy Full File Name",
+                    label: t("preview.directory.copyFullFileName"),
                     click: () => fireAndForget(() => navigator.clipboard.writeText(finfo.path)),
                 },
                 {
-                    label: "Copy File Name (Shell Quoted)",
+                    label: t("preview.directory.copyFileNameShellQuoted"),
                     click: () => fireAndForget(() => navigator.clipboard.writeText(shellQuote([fileName]))),
                 },
                 {
-                    label: "Copy Full File Name (Shell Quoted)",
+                    label: t("preview.directory.copyFullFileNameShellQuoted"),
                     click: () => fireAndForget(() => navigator.clipboard.writeText(shellQuote([finfo.path]))),
                 },
             ];
-            addOpenMenuItems(menu, conn, finfo);
+            addOpenMenuItems(menu, conn, finfo, startRemoteDownload);
             menu.push(
                 {
                     type: "separator",
                 },
                 {
-                    label: "Default Settings",
-                    submenu: makeDirectoryDefaultMenuItems(model),
-                },
-                {
-                    type: "separator",
-                },
-                {
-                    label: "Delete",
+                    label: t("preview.directory.delete"),
                     click: () => handleFileDelete(model, finfo.path, false, setErrorMsg),
                 }
             );
-            ContextMenuModel.getInstance().showContextMenu(menu, e);
+            ContextMenuModel.showContextMenu(menu, e);
         },
-        [setRefreshVersion, conn]
+        [conn, setErrorMsg, startRemoteDownload, table.options.meta]
     );
 
     const allRows = table.getRowModel().flatRows;
@@ -437,7 +523,11 @@ function TableBody({
         <div className="dir-table-body" ref={bodyRef}>
             {(searchActive || search !== "") && (
                 <div className="flex rounded-[3px] py-1 px-2 bg-warning text-black" ref={warningBoxRef}>
-                    <span>{search === "" ? "Type to search (Esc to cancel)" : `Searching for "${search}"`}</span>
+                    <span>
+                        {search === ""
+                            ? t("preview.directory.typeToSearch")
+                            : t("preview.directory.searchingFor", { search })}
+                    </span>
                     <div
                         className="ml-auto bg-transparent flex justify-center items-center flex-col p-0.5 rounded-md hover:bg-hoverbg focus:bg-hoverbg focus-within:bg-hoverbg cursor-pointer"
                         onClick={() => {
@@ -498,7 +588,15 @@ type TableRowProps = {
     handleFileContextMenu: (e: any, finfo: FileInfo) => Promise<void>;
 };
 
-function TableRow({ model, row, focusIndex, setFocusIndex, setSearch, idx, handleFileContextMenu }: TableRowProps) {
+const TableRow = React.forwardRef(function ({
+    model,
+    row,
+    focusIndex,
+    setFocusIndex,
+    setSearch,
+    idx,
+    handleFileContextMenu,
+}: TableRowProps) {
     const dirPath = useAtomValue(model.statFilePath);
     const connection = useAtomValue(model.connection);
 
@@ -549,7 +647,7 @@ function TableRow({ model, row, focusIndex, setFocusIndex, setSearch, idx, handl
             ))}
         </div>
     );
-}
+});
 
 const MemoizedTableBody = React.memo(
     TableBody,
@@ -561,13 +659,13 @@ interface DirectoryPreviewProps {
 }
 
 function DirectoryPreview({ model }: DirectoryPreviewProps) {
-    const env = useWaveEnv<PreviewEnv>();
     const [searchText, setSearchText] = useState("");
     const [focusIndex, setFocusIndex] = useState(0);
     const [unfilteredData, setUnfilteredData] = useState<FileInfo[]>([]);
     const showHiddenFiles = useAtomValue(model.showHiddenFiles);
     const [selectedPath, setSelectedPath] = useState("");
     const [refreshVersion, setRefreshVersion] = useAtom(model.refreshVersion);
+    const [downloadTasks, setDownloadTasks] = useState<DownloadTaskUpdate[]>([]);
     const conn = useAtomValue(model.connection);
     const blockData = useAtomValue(model.blockAtom);
     const finfo = useAtomValue(model.statFile);
@@ -583,31 +681,123 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
         };
     }, [setRefreshVersion]);
 
+    useEffect(() => {
+        const unsubscribe = getApi().onDownloadTaskUpdate((update) => {
+            if (update.scopeId !== model.blockId) {
+                return;
+            }
+            setDownloadTasks((current) => {
+                const idx = current.findIndex((task) => task.id === update.id);
+                if (idx === -1) {
+                    return [...current, update];
+                }
+                const next = [...current];
+                next[idx] = update;
+                return next;
+            });
+        });
+        return unsubscribe;
+    }, [model.blockId]);
+
+    const dismissDownloadTask = useCallback((taskId: string) => {
+        setDownloadTasks((current) => current.filter((task) => task.id !== taskId));
+    }, []);
+
+    const collectDirectoryDownloadItems = useCallback(
+        async (target: FileInfo, relativePrefix = ""): Promise<DownloadTaskItem[]> => {
+            const fileName = getDisplayName(target);
+            if (!target.isdir) {
+                return [
+                    {
+                        sourcePath: await model.formatRemoteUri(target.path, globalStore.get),
+                        downloadName: fileName,
+                        relativePath: relativePrefix || fileName,
+                        size: target.size ?? 0,
+                    },
+                ];
+            }
+
+            const dirData = await RpcApi.FileReadCommand(
+                TabRpcClient,
+                {
+                    info: {
+                        path: await model.formatRemoteUri(target.path, globalStore.get),
+                    },
+                },
+                null
+            );
+
+            const items: DownloadTaskItem[] = [];
+            for (const entry of dirData.entries ?? []) {
+                if (entry == null || isBlank(entry.name) || entry.name === "..") {
+                    continue;
+                }
+                const entryPath = entry.path ?? `${target.path}/${entry.name}`;
+                const nextEntry = { ...entry, path: entryPath };
+                const nextRelativePath = relativePrefix ? `${relativePrefix}/${entry.name}` : entry.name;
+                const childItems = await collectDirectoryDownloadItems(nextEntry, nextRelativePath);
+                items.push(...childItems);
+            }
+            return items;
+        },
+        [model]
+    );
+
+    const startRemoteDownload = useCallback(
+        (target: FileInfo) => {
+            fireAndForget(async () => {
+                try {
+                    const displayName = getDisplayName(target);
+                    const items = await collectDirectoryDownloadItems(target);
+                    if (items.length === 0 && !target.isdir) {
+                        throw new Error(t("preview.downloadUnableToPrepare", undefined, "Unable to prepare download"));
+                    }
+                    await getApi().startDownloadTask({
+                        scopeId: model.blockId,
+                        kind: target.isdir ? "folder" : "file",
+                        displayName,
+                        items,
+                    });
+                } catch (e) {
+                    setErrorMsg({
+                        status: target.isdir
+                            ? t("preview.downloadFolderFailed", undefined, "Download Folder Failed")
+                            : t("preview.downloadFileFailed", undefined, "Download File Failed"),
+                        text: `${e}`,
+                    });
+                }
+            });
+        },
+        [collectDirectoryDownloadItems, model.blockId, setErrorMsg]
+    );
+
     useEffect(
         () =>
             fireAndForget(async () => {
-                const entries: FileInfo[] = [];
+                let entries: FileInfo[];
                 try {
-                    const remotePath = await model.formatRemoteUri(dirPath, globalStore.get);
-                    const stream = env.rpc.FileListStreamCommand(TabRpcClient, { path: remotePath }, null);
-                    for await (const chunk of stream) {
-                        if (chunk?.fileinfo) {
-                            entries.push(...chunk.fileinfo);
-                        }
-                    }
-                    if (finfo?.dir && finfo?.path !== finfo?.dir) {
+                    const file = await RpcApi.FileReadCommand(
+                        TabRpcClient,
+                        {
+                            info: {
+                                path: await model.formatRemoteUri(dirPath, globalStore.get),
+                            },
+                        },
+                        null
+                    );
+                    entries = file.entries ?? [];
+                    if (file?.info && file.info.dir && file.info?.path !== file.info?.dir) {
                         entries.unshift({
                             name: "..",
-                            path: finfo.dir,
+                            path: file?.info?.dir,
                             isdir: true,
                             modtime: new Date().getTime(),
                             mimetype: "directory",
                         });
                     }
                 } catch (e) {
-                    console.error("Directory Read Error", e);
                     setErrorMsg({
-                        status: "Cannot Read Directory",
+                        status: t("preview.directory.cannotReadDirectory"),
                         text: `${e}`,
                     });
                 }
@@ -680,7 +870,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                 PLATFORM == PlatformMacOS &&
                 !blockData?.meta?.connection
             ) {
-                env.electron.onQuicklook(selectedPath);
+                getApi().onQuicklook(selectedPath);
                 return true;
             }
             if (isCharacterKeyEvent(waveEvent)) {
@@ -714,7 +904,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
     const handleDropCopy = useCallback(
         async (data: CommandFileCopyData, isDir: boolean) => {
             try {
-                await env.rpc.FileCopyCommand(TabRpcClient, data, { timeout: data.opts.timeout });
+                await RpcApi.FileCopyCommand(TabRpcClient, data, { timeout: data.opts.timeout });
             } catch (e) {
                 console.warn("Copy failed:", e);
                 const copyError = `${e}`;
@@ -722,19 +912,19 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                 let errorMsg: ErrorMsg;
                 if (allowRetry) {
                     errorMsg = {
-                        status: "Confirm Overwrite File(s)",
-                        text: "This copy operation will overwrite an existing file. Would you like to continue?",
+                        status: t("preview.directory.confirmOverwriteFiles"),
+                        text: t("preview.directory.copyWillOverwrite"),
                         level: "warning",
                         buttons: [
                             {
-                                text: "Delete Then Copy",
+                                text: t("preview.directory.deleteThenCopy"),
                                 onClick: async () => {
                                     data.opts.overwrite = true;
                                     await handleDropCopy(data, isDir);
                                 },
                             },
                             {
-                                text: "Sync",
+                                text: t("preview.directory.sync"),
                                 onClick: async () => {
                                     data.opts.merge = true;
                                     await handleDropCopy(data, isDir);
@@ -744,7 +934,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                     };
                 } else {
                     errorMsg = {
-                        status: "Copy Failed",
+                        status: t("preview.directory.copyFailed"),
                         text: copyError,
                         level: "error",
                     };
@@ -801,7 +991,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
             onSave: (newName: string) => {
                 console.log(`newFile: ${newName}`);
                 fireAndForget(async () => {
-                    await env.rpc.FileCreateCommand(
+                    await RpcApi.FileCreateCommand(
                         TabRpcClient,
                         {
                             info: {
@@ -822,7 +1012,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
             onSave: (newName: string) => {
                 console.log(`newDirectory: ${newName}`);
                 fireAndForget(async () => {
-                    await env.rpc.FileMkdirCommand(TabRpcClient, {
+                    await RpcApi.FileMkdirCommand(TabRpcClient, {
                         info: {
                             path: await model.formatRemoteUri(`${dirPath}/${newName}`, globalStore.get),
                         },
@@ -840,13 +1030,13 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
             e.stopPropagation();
             const menu: ContextMenuItem[] = [
                 {
-                    label: "New File",
+                    label: t("preview.directory.newFile"),
                     click: () => {
                         newFile();
                     },
                 },
                 {
-                    label: "New Folder",
+                    label: t("preview.directory.newFolder"),
                     click: () => {
                         newDirectory();
                     },
@@ -855,11 +1045,11 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                     type: "separator",
                 },
             ];
-            addOpenMenuItems(menu, conn, finfo);
+            addOpenMenuItems(menu, conn, finfo, startRemoteDownload);
 
-            ContextMenuModel.getInstance().showContextMenu(menu, e);
+            ContextMenuModel.showContextMenu(menu, e);
         },
-        [setRefreshVersion, conn, newFile, newDirectory, dirPath]
+        [conn, dirPath, finfo, newDirectory, newFile, startRemoteDownload]
     );
 
     return (
@@ -889,7 +1079,9 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                     entryManagerOverlayPropsAtom={entryManagerPropsAtom}
                     newFile={newFile}
                     newDirectory={newDirectory}
+                    startRemoteDownload={startRemoteDownload}
                 />
+                <DownloadTaskDock tasks={downloadTasks} dismissTask={dismissDownloadTask} />
             </div>
             {entryManagerProps && (
                 <EntryManagerOverlay

@@ -5,9 +5,11 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
     --min-row-width: 35rem;
     .dir-table {
-        height: 100%;
+        flex: 1 1 auto;
+        min-height: 0;
         width: 100%;
         --col-size-size: 0.2rem;
         display: flex;
@@ -72,17 +74,6 @@
                         display: flex;
                         justify-content: center;
                         flex: 0 0 auto;
-                        position: relative;
-                        &::before {
-                            content: "";
-                            position: absolute;
-                            left: 50%;
-                            top: 10%;
-                            height: 80%;
-                            width: 1px;
-                            background-color: var(--border-color);
-                            pointer-events: none;
-                        }
                         .dir-table-head-resize {
                             cursor: col-resize;
                             user-select: none;
@@ -141,10 +132,6 @@
                         }
                     }
 
-                    &:nth-child(odd):not(.focused):not(:focus) {
-                        background-color: rgba(255, 255, 255, 0.06);
-                    }
-
                     &:hover:not(:focus):not(.focused) {
                         background-color: var(--highlight-bg-color);
                     }
@@ -154,7 +141,7 @@
                         white-space: nowrap;
                         padding: 0.25rem;
                         cursor: default;
-                        font-size: 12px;
+                        font-size: 0.8125rem;
                         flex: 0 0 auto;
 
                         &.col-size {
@@ -163,17 +150,14 @@
 
                         .dir-table-lastmod,
                         .dir-table-modestr,
+                        .dir-table-size,
                         .dir-table-type {
                             color: var(--secondary-text-color);
                             margin-right: 12px;
                         }
 
-                        .dir-table-modestr,
-                        .dir-table-size,
-                        .dir-table-lastmod {
-                            color: var(--secondary-text-color);
+                        .dir-table-modestr {
                             font-family: Hack;
-                            font-size: 11px;
                         }
 
                         .dir-table-name {
@@ -181,6 +165,67 @@
                         }
                     }
                 }
+            }
+        }
+    }
+
+    .dir-download-dock {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px 5px 5px;
+        border-top: 1px solid var(--border-color);
+        background: color-mix(in srgb, var(--block-bg-color) 92%, transparent);
+
+        .dir-download-task {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: var(--highlight-bg-color);
+
+            .dir-download-task-header {
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .dir-download-task-text {
+                min-width: 0;
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .dir-download-task-title {
+                font-size: 0.8125rem;
+                font-weight: 600;
+                color: var(--main-text-color);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .dir-download-task-meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                font-size: 0.75rem;
+                color: var(--secondary-text-color);
+            }
+
+            .dir-download-task-error {
+                color: var(--error-color);
+            }
+
+            .dir-download-dismiss {
+                flex: 0 0 auto;
+                min-width: 24px;
+                min-height: 24px;
+                padding: 0;
             }
         }
     }
