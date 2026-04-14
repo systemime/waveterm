@@ -73,7 +73,7 @@ function computeCompatibleSections(
     const allConfigs = [...waveProviderConfigs, ...otherProviderConfigs];
 
     if (!currentConfig) {
-        return [{ sectionName: "Incompatible Modes", configs: allConfigs, isIncompatible: true }];
+        return [{ sectionName: t("aiPanel.sectionIncompatibleModes"), configs: allConfigs, isIncompatible: true }];
     }
 
     const currentSwitchCompat = currentConfig["ai:switchcompat"] || [];
@@ -102,11 +102,16 @@ function computeCompatibleSections(
     }
 
     const sections: ConfigSection[] = [];
-    const compatibleSectionName = compatibleConfigs.length === 1 ? "Current" : "Compatible Modes";
+    const compatibleSectionName =
+        compatibleConfigs.length === 1 ? t("aiPanel.sectionCurrent") : t("aiPanel.sectionCompatibleModes");
     sections.push({ sectionName: compatibleSectionName, configs: compatibleConfigs });
 
     if (incompatibleConfigs.length > 0) {
-        sections.push({ sectionName: "Incompatible Modes", configs: incompatibleConfigs, isIncompatible: true });
+        sections.push({
+            sectionName: t("aiPanel.sectionIncompatibleModes"),
+            configs: incompatibleConfigs,
+            isIncompatible: true,
+        });
     }
 
     return sections;
@@ -121,13 +126,13 @@ function computeWaveCloudSections(
 
     if (waveProviderConfigs.length > 0) {
         sections.push({
-            sectionName: "Wave AI Cloud",
+            sectionName: t("aiPanel.sectionWaveAiCloud"),
             configs: waveProviderConfigs,
             noTelemetry: !telemetryEnabled,
         });
     }
     if (otherProviderConfigs.length > 0) {
-        sections.push({ sectionName: "Custom", configs: otherProviderConfigs });
+        sections.push({ sectionName: t("aiPanel.sectionCustom"), configs: otherProviderConfigs });
     }
 
     return sections;
@@ -174,7 +179,7 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
     };
 
     const displayConfig = aiModeConfigs[currentMode];
-    const displayName = displayConfig ? getModeDisplayName(displayConfig) : `Invalid (${currentMode})`;
+    const displayName = displayConfig ? getModeDisplayName(displayConfig) : t("aiPanel.invalidMode", { mode: currentMode });
     const displayIcon = displayConfig ? displayConfig["display:icon"] || "sparkles" : "question";
     const resolvedConfig = waveaiModeConfigs[currentMode];
     const hasToolsSupport = resolvedConfig && resolvedConfig["ai:capabilities"]?.includes("tools");
@@ -219,7 +224,7 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
                     "group flex items-center gap-1.5 px-2 py-1 text-xs text-gray-300 hover:text-white rounded transition-colors cursor-pointer border border-gray-600/50",
                     isOpen ? "bg-zinc-700" : "bg-zinc-800/50 hover:bg-zinc-700"
                 )}
-                title={`AI Mode: ${displayName}`}
+                title={t("aiPanel.modeTitle", { name: displayName })}
             >
                 <i className={cn(makeIconClass(displayIcon, false), "text-[10px]")}></i>
                 <span className={`text-[11px]`}>{displayName}</span>
@@ -230,9 +235,7 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
                 <Tooltip
                     content={
                         <div className="max-w-xs">
-                            Warning: This custom mode was configured without the "tools" capability in the
-                            "ai:capabilities" array. Without tool support, Wave AI will not be able to interact with
-                            widgets or files.
+                            {t("aiPanel.noToolsSupportWarning")}
                         </div>
                     }
                     placement="bottom"

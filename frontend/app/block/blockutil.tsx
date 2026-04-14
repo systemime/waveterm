@@ -5,6 +5,7 @@ import { Button } from "@/app/element/button";
 import { IconButton, ToggleIconButton } from "@/element/iconbutton";
 import { MagnifyIcon } from "@/element/magnify";
 import { MenuButton } from "@/element/menubutton";
+import { t } from "@/util/i18n";
 import * as util from "@/util/util";
 import clsx from "clsx";
 import * as React from "react";
@@ -36,25 +37,25 @@ export function blockViewToIcon(view: string): string {
 
 export function blockViewToName(view: string): string {
     if (util.isBlank(view)) {
-        return "(No View)";
+        return t("block.viewNames.noView");
     }
     if (view == "term") {
-        return "Terminal";
+        return t("block.viewNames.term");
     }
     if (view == "preview") {
-        return "Preview";
+        return t("block.viewNames.preview");
     }
     if (view == "web") {
-        return "Web";
+        return t("block.viewNames.web");
     }
     if (view == "waveai") {
-        return "WaveAI";
+        return t("block.viewNames.waveai");
     }
     if (view == "help") {
-        return "Help";
+        return t("block.viewNames.help");
     }
     if (view == "tips") {
-        return "Tips";
+        return t("block.viewNames.tips");
     }
     return view;
 }
